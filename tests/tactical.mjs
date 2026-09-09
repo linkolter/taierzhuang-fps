@@ -1,0 +1,14 @@
+import {mkdir,writeFile} from 'node:fs/promises';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');const browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({viewport:{width:1280,height:720}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.TEST_URL||'http://localhost:5173');await page.waitForFunction(()=>window.__game?.scene.isReady());
+const result=await page.evaluate(()=>{
+ const g=window.__game;g.engine.stopRenderLoop();const V=g.player.position.constructor,graph=g.world.tactical;const runs=[];
+ const walk=(name,from,to,route)=>{const b=g.bots[0];b.position.set(...from);b.target=null;const path=graph.find(b.position,new V(...to),route);let reached=0,lowest=b.position.y,highest=b.position.y,stopped=null;for(const goal of path){let success=false;for(let i=0;i<2500;i++){if(V.Distance(b.position,goal)<.21){success=true;break;}b.walkTo(goal,1/60,3.5);b.position.y=g.world.floorAt(b.position.x,b.position.z,b.position.y);lowest=Math.min(lowest,b.position.y);highest=Math.max(highest,b.position.y);}if(!success){stopped={goal:goal.asArray(),position:b.position.asArray()};break;}reached++;}runs.push({name,nodes:path.length,reached,lowest,highest,end:b.position.asArray(),passed:path.length>0&&reached===path.length,stopped});};
+ walk('surface-tunnel-surface',[-80,0,0],[42,0,0],'tunnel');walk('surface-high',[-80,0,0],[0,2.4,22],'north');walk('high-surface',[0,2.4,22],[-42,0,0],'north');walk('surface-low',[-80,0,0],[30,-1.2,-38],'south');walk('low-B',[30,-1.2,-38],[0,1.2,0],'south');walk('tunnel-room',[0,-4,-29],[17,-4,-34],'tunnel');
+ walk('west-high-tunnel',[-68,0,-12],[-64,2.4,27],'tunnel');walk('east-high-tunnel',[68,0,-12],[64,2.4,27],'tunnel');walk('high-to-low',[-64,2.4,27],[30,-1.2,-38],'tunnel');
+ const heights={surface:g.world.floorAt(-80,0),high:g.world.floorAt(0,22),low:g.world.floorAt(30,-38),b:g.world.floorAt(0,0),tunnel:g.world.floorAt(20,-29,-4)};
+ return {runs,heights,nodes:graph.nodes.length,edges:graph.edges.reduce((s,e)=>s+e.length,0),covers:g.world.coverPoints.length,errors:g.diagnostics.errors};
+});await mkdir('test-results',{recursive:true});await writeFile('test-results/tactical.json',JSON.stringify({result,errors},null,2));console.log(JSON.stringify({result,errors},null,2));
+for(const [name,position,yaw,pitch] of [['high',[-4,2.4,22],Math.PI,-.05],['low',[30,-1.2,-38],Math.PI/2,0],['overview',[-27,10,-22],.7,.3]]){await page.evaluate(({position,yaw,pitch})=>{const g=window.__game;g.player.position.set(...position);g.player.yaw=yaw;g.player.pitch=pitch;g.player.update(0);g.hud.menu.hidden=true;g.hud.update();g.scene.render();},{position,yaw,pitch});await page.screenshot({path:`test-results/${name}.png`});}
+await browser.close();if(errors.length||result.runs.some(r=>!r.passed))process.exit(1);
+
+

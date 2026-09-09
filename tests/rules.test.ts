@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { Vector3 } from '@babylonjs/core';
+import { CaptureSystem } from '../src/capture/CaptureSystem';
+import { Match } from '../src/game/Match';
+import { CONFIG, type Team } from '../src/config/gameConfig';
+import type { Actor } from '../src/game/types';
+const actor=(team:Team,x=-42,y=0):Actor=>({id:team==='cn'?1:2,team,position:new Vector3(x,y,0),health:100,alive:true,respawnAt:0,protection:0});
+test('contested capture pauses; underground actors cannot capture through the ground',()=>{const c=new CaptureSystem();c.update(5,[actor('cn'),actor('jp')]);assert.equal(c.points[0].progress,0);assert.equal(c.points[0].contested,true);c.update(30,[actor('cn',-42,-4)]);assert.equal(c.points[0].owner,null);});
+test('enemy must neutralize before taking ownership',()=>{const c=new CaptureSystem();c.update(CONFIG.match.captureSeconds,[actor('cn')]);assert.equal(c.points[0].owner,'cn');c.update(CONFIG.match.captureSeconds,[actor('jp')]);assert.equal(c.points[0].owner,null);c.update(CONFIG.match.captureSeconds,[actor('jp')]);assert.equal(c.points[0].owner,'jp');});
+test('two points bleed one ticket and three bleed two; one point does not bleed',()=>{const m=new Match(),c=new CaptureSystem();c.points[0].owner='cn';m.update(7,c);assert.equal(m.tickets.jp,100);c.points[1].owner='cn';m.update(7,c);assert.equal(m.tickets.jp,99);c.points[2].owner='cn';m.update(7,c);assert.equal(m.tickets.jp,97);});
+test('zero tickets resolve either winner once; reset restores the whole match',()=>{for(const losing of ['cn','jp'] as Team[]){const m=new Match();m.tickets[losing]=1;m.death(losing);assert.equal(m.winner,losing==='cn'?'jp':'cn');m.death(losing);assert.equal(m.deaths[losing],1);m.reset();assert.equal(m.winner,null);assert.equal(m.tickets[losing],100);}});
+test('time limit resolves unequal tickets and equal tickets continue into overtime',()=>{const m=new Match(),c=new CaptureSystem();m.update(720,c);assert.equal(m.winner,null);m.death('jp');m.update(.1,c);assert.equal(m.winner,'cn');});

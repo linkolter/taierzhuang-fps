@@ -1,0 +1,1 @@
+import fs from 'node:fs';let s=fs.readFileSync('src/map/MapLayout.ts','utf8').replace('{x:-40,z:-29,w:3,d:.7,h:1.1}','{x:-40,z:-27.7,w:2,d:.7,h:1.1}').replace("Math.abs(x-12)<6?6:3.8","x>=-2&&x<=18?7:3.8");fs.writeFileSync('src/map/MapLayout.ts',s);

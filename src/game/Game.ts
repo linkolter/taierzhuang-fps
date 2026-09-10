@@ -1,4 +1,5 @@
 import { Color3, Color4, DirectionalLight, Engine, HemisphericLight, PointLight, Scene, Vector3 } from '@babylonjs/core';
+import { applyMapMaterials } from '../map/MapMaterials';
 import { World } from '../map/World';
 import { Player } from '../player/Player';
 import { Weapon } from '../weapons/Weapon';
@@ -24,7 +25,7 @@ export class Game {
     this.engine = new Engine(canvas, true); this.engine.setHardwareScalingLevel(Math.max(1,window.devicePixelRatio/CONFIG.graphics.maxPixelRatio)); this.scene = new Scene(this.engine); this.scene.clearColor = Color4.FromHexString('#c5c7bbff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=CONFIG.graphics.fogStart;this.scene.fogEnd=CONFIG.graphics.fogEnd;this.scene.fogColor=Color3.FromHexString('#c5c7bb');
     this.ambient = new HemisphericLight('sky', new Vector3(.3, 1, .2), this.scene); this.ambient.intensity = .8; this.ambient.groundColor = Color3.FromHexString('#71604b'); this.sun=new DirectionalLight('sun', new Vector3(-.5, -1, -.3), this.scene);this.sun.intensity=.9;
     this.lamp=new PointLight('nearest-oil-lamp',new Vector3(0,-2,-29),this.scene);this.lamp.diffuse=Color3.FromHexString('#f3b866');this.lamp.range=15;this.lamp.intensity=0;
-    this.world = new World(this.scene); this.world.buildVillage(); this.player = new Player(this.scene, canvas, this.world); this.weapon = new Weapon(this.scene, this.player, this.world);
+    this.world = new World(this.scene); this.world.buildVillage(); applyMapMaterials(this.world); this.player = new Player(this.scene, canvas, this.world); this.weapon = new Weapon(this.scene, this.player, this.world);
     for (let i = 1; i <= CONFIG.ai.cnCount + CONFIG.ai.jpCount; i++) this.bots.push(new Bot(i, i <= CONFIG.ai.cnCount ? 'cn' : 'jp', this.world));
     this.actors = [this.player, ...this.bots]; this.combat = new Combat(this.world, this.actors); this.hud = new HUD(this);
     this.captureVisuals=new CaptureVisuals(this.world,this.capture);this.effects=new Effects(this.world);
@@ -52,7 +53,7 @@ export class Game {
     for (const b of this.bots) b.update(dt, this.time, this.actors, this.objectives, this.visible);
     this.separateActors();
     this.capture.update(dt, this.actors); this.match.update(dt, this.capture);
-    this.captureVisuals.update(this.time);this.effects.update(dt);const underground=this.player.position.y < -1.8;this.ambient.intensity=underground?.25:.8;this.sun.intensity=underground?.04:.9;this.lamp.intensity=underground?1.5:0;if(underground){let nearest=this.world.lamps[0];for(const p of this.world.lamps)if(Vector3.DistanceSquared(p,this.player.position)<Vector3.DistanceSquared(nearest,this.player.position))nearest=p;this.lamp.position.copyFrom(nearest);}
+    this.captureVisuals.update(this.time);this.effects.update(dt);const underground=this.world.undergroundAt(this.player.position.x,this.player.position.y,this.player.position.z);this.ambient.intensity=underground?.25:.8;this.sun.intensity=underground?.04:.9;this.lamp.intensity=underground?1.5:0;if(underground){let nearest=this.world.lamps[0];for(const p of this.world.lamps)if(Vector3.DistanceSquared(p,this.player.position)<Vector3.DistanceSquared(nearest,this.player.position))nearest=p;this.lamp.position.copyFrom(nearest);}
     this.stepClock+=dt;if(this.player.moving&&this.stepClock>(this.player.sprinting?.29:.44)){this.audio.play('step');this.stepClock=0;}
     if (this.match.winner) { this.paused = true; document.exitPointerLock(); this.hud.win(); }
   }

@@ -1,0 +1,5 @@
+import {NullEngine,Scene,Vector3} from '@babylonjs/core';import {World} from '../src/map/World';import {laneZ} from '../src/map/MapLayout';import {groundLane} from '../src/map/Topology';
+const w=new World(new Scene(new NullEngine()));w.buildVillage();const g=w.tactical!;const sp=(x:number,z:number)=>new Vector3(x,w.terrain.height(x,z),z);
+const reach=(start:Vector3,end:Vector3,restrict=false)=>{const s=g.nearest(start),e=g.nearest(end),seen=new Set([s]),queue=[s];for(let i=0;i<queue.length;i++){const a=queue[i];if(a===e)return true;for(const edge of g.edges[a]){const n=g.nodes[edge.to];if(n.level==='tunnel'||seen.has(n.id)||restrict&&groundLane(n.position.z)!==groundLane(g.nodes[a].position.z))continue;seen.add(n.id);queue.push(n.id);}}return false;};
+for(const l of ['north','south','main'] as const)console.log(l,'surface through',reach(sp(-82,laneZ(l,-82)),sp(82,laneZ(l,82)),true),'spawn to lane',reach(sp(-82,0),sp(0,laneZ(l,0))));
+for(const p of [{x:-14,z:14},{x:26,z:-14}])console.log('gate',p,w.tactical!.walkableLink(sp(p.x,p.z-2),sp(p.x,p.z+2)));

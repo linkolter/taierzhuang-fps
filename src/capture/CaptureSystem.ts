@@ -1,13 +1,10 @@
 import { CONFIG, type Team } from '../config/gameConfig';
 import type { Actor, Objective } from '../game/types';
+import { OBJECTIVES } from '../map/MapLayout';
 import { clamp } from '../core/math';
 export interface CapturePoint extends Objective { name: string; contested: boolean; present: { cn: number; jp: number } }
 export class CaptureSystem {
-  points: CapturePoint[] = [
-    { id: 'A', name: '西院祠堂', x: -42, z: 0, owner: null, progress: 0, contested: false, present: { cn: 0, jp: 0 } },
-    { id: 'B', name: '中央晒场', x: 0, y:CONFIG.terrain.centre, z: 0, owner: null, progress: 0, contested: false, present: { cn: 0, jp: 0 } },
-    { id: 'C', name: '东村粮仓', x: 42, z: 0, owner: null, progress: 0, contested: false, present: { cn: 0, jp: 0 } },
-  ];
+  points: CapturePoint[] = OBJECTIVES.map(p=>({...p,owner:null,progress:0,contested:false,present:{cn:0,jp:0}}));
   onCapture = (_point: CapturePoint, _owner: Team | null) => {};
   reset() { for (const p of this.points) { p.owner = null; p.progress = 0; p.contested = false; p.present = { cn: 0, jp: 0 }; } }
   update(dt: number, actors: Actor[]) {

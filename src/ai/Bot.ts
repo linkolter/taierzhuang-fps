@@ -17,10 +17,10 @@ export class Bot implements Actor {
     const routes: Route[] = ['main', 'north', 'main', 'south', 'tunnel', 'north', 'main', 'south']; this.route = routes[(id - 1) % 8];
     this.model = new SoldierModel(world.scene, world, team, id); this.respawn(0);
   }
-  respawn(time: number) { this.routeAnchor=null;this.anchorVisited=false;this.releaseCover();this.births++;this.dirty=true;this.crouching=false;this.lastSeen=-100;this.engagedSince=-100;this.coverCheckAt=0;this.stuck=0;this.think=this.id*.012;this.position.set(this.team === 'cn' ? -80 : 80, 0, ((this.id % 4) - 1.5) * 3); this.health = CONFIG.player.health; this.alive = true; this.state = 'Spawn'; this.target = null; this.path = []; this.pathIndex = 0; this.ammo = CONFIG.rifle.capacity; this.protection = CONFIG.match.spawnProtection; this.nextShot = time + 2; this.reloadUntil = 0; this.replanAt = 0; this.deadAt = -1; this.model.root.setEnabled(true); }
+  respawn(time: number) { this.routeAnchor=null;this.anchorVisited=false;this.releaseCover();this.births++;this.dirty=true;this.crouching=false;this.lastSeen=-100;this.engagedSince=-100;this.coverCheckAt=0;this.stuck=0;this.think=this.id*.012;this.position.set(this.team === 'cn' ? -82 : 82, 0, ((this.id % 4) - 1.5) * 1.1); this.health = CONFIG.player.health; this.alive = true; this.state = 'Spawn'; this.target = null; this.path = []; this.pathIndex = 0; this.ammo = CONFIG.rifle.capacity; this.protection = CONFIG.match.spawnProtection; this.nextShot = time + 2; this.reloadUntil = 0; this.replanAt = 0; this.deadAt = -1; this.model.root.setEnabled(true); }
   releaseCover(){if(this.cover?.reservedBy===this.id)this.cover.reservedBy=null;this.cover=null;this.coverPath.length=0;this.coverArrived=0;}
   requestReplan(time:number){this.dirty=true;this.replanAt=time+this.id*.07;}
-  chooseRoute(){if(this.position.y<-1.6)return;const routes:Route[]=['main','north','south','tunnel'];const preference:Route[]=['main','north','main','south','tunnel','north','main','south'];const preferred=preference[(this.id+Math.max(0,this.births-1)*3-1)%8];let best:Route=preferred,bestScore=Infinity;
+  chooseRoute(){if(this.world.undergroundAt(this.position.x,this.position.y,this.position.z))return;const routes:Route[]=['main','north','south','tunnel'];const preference:Route[]=['main','north','main','south','tunnel','north','main','south'];const preferred=preference[(this.id+Math.max(0,this.births-1)*3-1)%8];let best:Route=preferred,bestScore=Infinity;
     const bPressure=this.roster.filter(a=>a.alive&&a.team!==this.team&&Math.hypot(a.position.x,a.position.z)<15).length;const highThreat=this.roster.filter(a=>a.alive&&a.team!==this.team&&a.position.y>1.5&&a.position.z>16).length;
     for(const route of routes){const count=this.roster.filter(a=>a instanceof Bot&&a.id!==this.id&&a.team===this.team&&a.alive&&a.route===route).length;let score=count*CONFIG.ai.routeCrowding+(route===preferred?-14:0)+Math.random()*10;if(route==='tunnel')score+=count*9+4;if(bPressure>=2&&(route==='south'||route==='tunnel'))score-=15;if(highThreat>0&&route==='north'&&count<2)score-=16;if(score<bestScore){bestScore=score;best=route;}}this.route=best;
   }
@@ -65,17 +65,17 @@ export class Bot implements Actor {
       if(time-this.lastSeen<CONFIG.ai.lostSightWait){this.state='SearchEnemy';this.crouching=!!this.cover;this.syncModel(time);return;}
       this.releaseCover();if (time >= this.replanAt) this.plan(objectives, time);
       const goal = this.path[this.pathIndex];
-      if (goal) { this.state = this.position.y < -1.6 ? 'TraverseTunnel':'MoveToObjective';this.followObjective(dt); }
+      if (goal) { this.state = this.world.undergroundAt(this.position.x,this.position.y,this.position.z) ? 'TraverseTunnel':'MoveToObjective';this.followObjective(dt); }
       else { this.state = 'Capture'; if (!objectives.some(o => o.id === this.objective && o.owner !== this.team)) this.replanAt = Math.min(this.replanAt, time + 1); }
     }
     this.syncModel(time);
   }
-  followObjective(dt:number,speed:number=CONFIG.ai.speed){const goal=this.path[this.pathIndex];if(!goal)return;this.walkTo(goal,dt,this.position.y<-1.6?CONFIG.ai.tunnelSpeed:speed);if(Vector3.Distance(this.position,goal)<(this.position.y<-1.6?.22:.38))this.pathIndex++;}
+  followObjective(dt:number,speed:number=CONFIG.ai.speed){const goal=this.path[this.pathIndex];if(!goal)return;this.walkTo(goal,dt,this.world.undergroundAt(this.position.x,this.position.y,this.position.z)?CONFIG.ai.tunnelSpeed:speed);if(Vector3.Distance(this.position,goal)<(this.world.undergroundAt(this.position.x,this.position.y,this.position.z)?.22:.38))this.pathIndex++;}
   syncModel(time:number){this.position.y=this.world.floorAt(this.position.x,this.position.z,this.position.y);this.model.root.position.copyFrom(this.position);this.model.root.scaling.y=this.crouching?.72:1;this.model.update(time+this.id,this.moving,!!this.target,this.state==='Melee',this.shot,-1);}
   combatMove(dt:number,time:number,enemy:Actor){
     const phase=(time-this.engagedSince)%11;
     if(this.cover&&time-this.coverSince>CONFIG.ai.advanceAfter){this.releaseCover();this.coverCheckAt=time+5;}
-    if(!this.cover&&time>=this.coverCheckAt&&this.position.y>=-1.6){this.coverCheckAt=time+2;const point=this.world.chooseCover(this.position,enemy.position,this.id);if(point){const path=this.world.tactical!.find(this.position,point.position,this.route);if(path.length){this.cover=point;point.reservedBy=this.id;this.coverPath=path;this.coverIndex=0;this.coverSince=time;}}}
+    if(!this.cover&&time>=this.coverCheckAt&&!this.world.undergroundAt(this.position.x,this.position.y,this.position.z)){this.coverCheckAt=time+2;const point=this.world.chooseCover(this.position,enemy.position,this.id);if(point){const path=this.world.tactical!.find(this.position,point.position,this.route);if(path.length){this.cover=point;point.reservedBy=this.id;this.coverPath=path;this.coverIndex=0;this.coverSince=time;}}}
     if(this.cover){
       if(!this.coverArrived){const goal=this.coverPath[this.coverIndex];if(goal){this.state='MoveToCover';this.walkTo(goal,dt,CONFIG.ai.sprint);if(Vector3.Distance(goal,this.position)<.3)this.coverIndex++;}else this.coverArrived=time;return;}
       const peek=(time-this.coverArrived)%(CONFIG.ai.holdCover+CONFIG.ai.peekSeconds)>CONFIG.ai.holdCover;
@@ -83,7 +83,7 @@ export class Bot implements Actor {
     }
     if(this.health<=25&&phase<1.3){this.state='Fallback';const dx=this.position.x-enemy.position.x,dz=this.position.z-enemy.position.z,len=Math.hypot(dx,dz)||1;this.coverGoal.set(this.position.x+dx/len*2,this.position.y,this.position.z+dz/len*2);this.walkTo(this.coverGoal,dt,2.6);return;}
     if(phase>CONFIG.ai.advanceAfter){this.state='Advance';this.followObjective(dt,CONFIG.ai.sprint);}
-    else if(phase>3&&phase<5&&this.position.y>=-1.6){this.state='Peek';const dx=enemy.position.x-this.position.x,dz=enemy.position.z-this.position.z,len=Math.hypot(dx,dz)||1,side=this.id%2?1:-1;this.coverGoal.set(this.position.x+dz/len*side,this.position.y,this.position.z-dx/len*side);this.walkTo(this.coverGoal,dt,1.15);}
+    else if(phase>3&&phase<5&&!this.world.undergroundAt(this.position.x,this.position.y,this.position.z)){this.state='Peek';const dx=enemy.position.x-this.position.x,dz=enemy.position.z-this.position.z,len=Math.hypot(dx,dz)||1,side=this.id%2?1:-1;this.coverGoal.set(this.position.x+dz/len*side,this.position.y,this.position.z-dx/len*side);this.walkTo(this.coverGoal,dt,1.15);}
     else this.state='EngageEnemy';
   }
   walkTo(goal: Vector3, dt: number, speed: number) { const dx=goal.x-this.position.x,dz=goal.z-this.position.z,length=Math.hypot(dx,dz);if(length<.1)return;const x=this.position.x,z=this.position.z;this.world.move(this.position,dx/length*Math.min(length,speed*dt),dz/length*Math.min(length,speed*dt));this.moving=Math.hypot(this.position.x-x,this.position.z-z)>.00001;if(!this.target)this.model.root.rotation.y=Math.atan2(dx,dz);this.stuck=this.moving?0:this.stuck+dt;if(this.stuck>1.5){this.recoveries++;this.releaseCover();this.dirty=true;this.replanAt=0;this.stuck=0;} }

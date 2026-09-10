@@ -1,0 +1,1 @@
+import fs from 'node:fs';const p='src/main.ts';let s=fs.readFileSync(p,'utf8');s+="\nif(import.meta.env.DEV && new URLSearchParams(location.search).has('perf'))import('./dev/PerformanceMonitor').then(({PerformanceMonitor})=>{const monitor=new PerformanceMonitor(game);if(import.meta.hot)import.meta.hot.dispose(()=>monitor.dispose());});\n";fs.writeFileSync(p,s);

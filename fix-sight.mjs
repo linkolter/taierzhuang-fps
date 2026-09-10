@@ -1,0 +1,3 @@
+import fs from 'node:fs';let s=fs.readFileSync('src/map/TopologyGeometry.ts','utf8');s=s.replace(" for(const lane of ['main'", " const previous=new Map<string,{x:number;z:number;base:number;h:number}>();\n for(const lane of ['main'");s=s.replace("z,1.1,h,.55,", "z,1.1,h,.8,");const marker=" }\n for(const p of GROUND_PORTALS)";s=s.replace(marker,`  const key=lane+side,last=previous.get(key);if(last&&x-last.x<1.1){const bottom=Math.min(base,last.base);w.box('wall-corner-joint',x-.5,bottom+Math.max(h,last.h)/2,(z+last.z)/2,.22,Math.max(h,last.h),Math.abs(z-last.z)+.8,lane==='south'?w.material('earth','#a89671'):wall);}previous.set(key,{x,z,base,h});
+ }
+ for(const p of GROUND_PORTALS)`);fs.writeFileSync('src/map/TopologyGeometry.ts',s);

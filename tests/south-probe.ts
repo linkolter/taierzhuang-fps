@@ -1,0 +1,3 @@
+import {NullEngine,Scene,Vector3} from '@babylonjs/core';import {World} from '../src/map/World';import {laneZ} from '../src/map/MapLayout';
+const w=new World(new Scene(new NullEngine()));w.buildVillage();const g=w.tactical!;
+for(let x=-82;x<=82;x+=2){const z=laneZ('south',x),y=w.terrain.height(x,z),p=new Vector3(x,y,z);if(!w.canStand(x,y,z)||!g.find(new Vector3(-82,w.terrain.height(-82,-28),-28),p,'south').length)console.log(x,z,'floor',w.floorAt(x,z,y),'stand',w.canStand(x,y,z),'nearest',g.nearest(p),w.obstacles.filter(o=>y+1.7>o.bottom+.06&&y<o.top-.05&&Math.abs(x-o.x)<o.w/2+.33&&Math.abs(z-o.z)<o.d/2+.33).slice(0,2));}

@@ -11,7 +11,7 @@ export class HUD {
       <div id="weapon"><span id="weapon-name">三八式步枪</span><div><strong id="ammo">5</strong><small id="ammo-max"> / 5</small></div><span id="weapon-state">栓动 · 单发</span></div>
       <div id="controls">WASD 移动　Shift 奔跑　C 蹲下　Space 跳跃　右键 瞄准　R 装填　1 / 2 武器　Esc 暂停</div>
       <div id="death" hidden><small>你已阵亡</small><h2>坚守，等待增援</h2><p>将在 <strong id="respawn">5</strong> 秒后从西侧重生</p></div>
-      <div id="menu"><div class="menu-inner"><div class="eyebrow">华北乡村 · 据点争夺 · ALPHA 01</div><h1>烽火<span>乡关</span></h1><p class="subtitle">守住村庄，争夺每一寸土地。</p><div class="brief"><span>中国方 <b>你 + 7 AI</b></span><span>日军方 <b>8 AI</b></span><span>作战范围 <b>180 × 90 m</b></span></div><p id="menu-copy">争夺 A / B / C，控制多数据点消耗敌方兵力。<br>沿主街推进，或进入南侧地道迂回敌军侧翼。</p><button id="start">开始作战 <span>→</span></button><p class="menu-help">点击后锁定鼠标 · Esc 暂停并释放鼠标<br>左键射击 / 挥砍　右键瞄准　R 换弹　1 步枪　2 大刀</p><div class="footnote">原创程序化场景与角色 · 单人离线 8 v 8</div></div></div>`;
+      <div id="menu"><div class="menu-inner"><div class="eyebrow">1938 鲁南村镇 · COMBAT MAP V2</div><h1>烽火<span>乡关</span></h1><p class="subtitle">守住村庄，争夺每一寸土地。</p><div class="brief"><span>中国方 <b>你 + 7 AI</b></span><span>日军方 <b>8 AI</b></span><span>作战范围 <b>180 × 90 m</b></span></div><p id="menu-copy">争夺 A / B / C，控制多数据点消耗敌方兵力。<br>主街正面推进，高地争夺视野，低沟隐蔽接敌，地道转线绕后。</p><button id="start">开始作战 <span>→</span></button><p class="menu-help">点击后锁定鼠标 · Esc 暂停并释放鼠标<br>左键射击 / 挥砍　右键瞄准　R 换弹　1 步枪　2 大刀</p><div class="footnote">原创程序化场景与角色 · 单人离线 8 v 8</div></div></div>`;
     this.menu = this.root.querySelector('#menu')!; this.startButton = this.root.querySelector('#start')!;
     this.startButton.addEventListener('click',this.clickStart);
   }
@@ -39,6 +39,6 @@ export class HUD {
     const cap = g.capture.points.find(o => Math.hypot(p.position.x-o.x,p.position.z-o.z) <= CONFIG.match.captureRadius && Math.abs(p.position.y-(o.y??0)) < 1.1);
     this.el('capture').innerHTML = cap && p.alive ? `<b>${cap.id} · ${cap.name}</b><span>${cap.contested ? '交战中 · 占领暂停' : cap.owner === p.team && cap.progress === 1 ? '我方控制' : '占领中'}　${Math.round(Math.abs(cap.progress)*100)}%</span><i><b style="width:${Math.abs(cap.progress)*100}%;background:${cap.progress >=0 ? CONFIG.colors.cn : CONFIG.colors.jp}"></b></i>` : '';
     this.el('death').hidden = p.alive || !!g.match.winner; this.el('respawn').textContent = String(Math.max(0, Math.ceil(p.respawnAt - g.time)));
-    this.el('location').textContent = p.position.y < -1.5 ? '地下交通线 · 沿木支撑前进，出口通往南侧' : p.protection > 0 ? '出生保护中' : '主街 / 北侧院落 / 南侧低地　·　地道入口在南侧木牌处';
+    this.el('location').textContent = this.game.world.undergroundAt(p.position.x,p.position.y,p.position.z) ? '地下交通线 · 木支撑与油灯引导各处出口' : p.protection > 0 ? '出生保护中' : p.position.z>14?'北线高地 · 狭窄高院':p.position.z<-14?'南线低沟 · 隐蔽推进':'中线主街 · A 西院 / B 晒谷场 / C 粮仓';
   }
 }

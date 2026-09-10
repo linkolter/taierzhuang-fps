@@ -3,6 +3,7 @@ import { applyMapMaterials } from '../map/MapMaterials';
 import { World } from '../map/World';
 import { Player } from '../player/Player';
 import { Weapon } from '../weapons/Weapon';
+import {PlayerPressureDirector} from '../ai/PlayerPressureDirector';
 import { Bot } from '../ai/Bot';
 import { Combat } from './Combat';
 import type { Actor, Objective } from './types';
@@ -17,7 +18,7 @@ import { Diagnostics } from '../core/Diagnostics';
 export class Game {
   engine: Engine; scene: Scene; world: World; player: Player; weapon: Weapon; time = 0; started = false;
   bots: Bot[] = []; actors: Actor[] = []; combat: Combat; hud: HUD;
-  capture = new CaptureSystem(); match = new Match(); paused = true; hudClock = 0;
+  pressure=new PlayerPressureDirector();capture = new CaptureSystem(); match = new Match(); paused = true; hudClock = 0;
   captureVisuals:CaptureVisuals; audio=new AudioSystem(); effects:Effects; ambient:HemisphericLight; sun:DirectionalLight; lamp:PointLight; stepClock=0;
   diagnostics?:Diagnostics; private events=new AbortController(); private visible=(a:Actor,b:Actor)=>this.combat.visible(a,b);
   get objectives(): Objective[] { return this.capture.points; }
@@ -31,11 +32,16 @@ export class Game {
     this.captureVisuals=new CaptureVisuals(this.world,this.capture);this.effects=new Effects(this.world);
     this.engine.maxFPS=CONFIG.graphics.maxFPS;if(import.meta.env.DEV)this.diagnostics=new Diagnostics(this);
     this.combat.onDeath = (victim, attacker, head) => { victim.respawnAt = this.time + CONFIG.match.respawn; if (victim instanceof Bot) victim.deadAt = this.time; else { this.player.deaths++; this.player.ads = false; } this.match.death(victim.team); if (attacker.id === 0) { this.player.kills++; this.hud.notify(head ? '爆头击杀 · 敌方兵力 −1' : '击杀确认 · 敌方兵力 −1'); } };
-    this.combat.onHit = (victim, attacker, head) => { if (attacker.id === 0) {this.hud.hit(head);this.audio.play('hit');} if (victim.id === 0) {this.hud.hurt();this.audio.play(victim.health===0?'death':'hit');} };
-    this.combat.onShot=(o,e,team,melee)=>{this.effects.shot(o,e,melee);if(Vector3.DistanceSquared(o,this.player.camera.position)>1)this.audio.play(melee?(team==='cn'?'dadao':'sabre'):'rifle',o,this.player.camera.position,this.player.yaw);};
-    this.weapon.onSound=name=>this.audio.play(name);
+    this.combat.onHit = (victim, attacker, head) => { if(victim instanceof Bot)victim.damaged(this.time);if (attacker.id === 0) {this.hud.hit(head);} if (victim.id === 0) {this.hud.hurt();this.audio.play(victim.health===0?'death':'hit');} };
+    this.combat.onImpact=(position,material,melee)=>this.audio.play(melee?'melee-hit':`impact-${material}`,position,this.player.camera.position,this.player.yaw,this.world.undergroundAt(position.x,position.y,position.z));
+    this.combat.onShot=(o,e,team,melee)=>{
+      if(Vector3.DistanceSquared(o,this.player.camera.position)>1){this.effects.shot(o,e,melee);this.audio.play(melee?(team==='cn'?'dadao':'sabre'):'rifle',o,this.player.camera.position,this.player.yaw,this.world.undergroundAt(o.x,o.y,o.z));}
+      else if(!melee)this.effects.flash(e,.09,.1);
+    };
+    this.weapon.onSound=name=>this.audio.play(name,undefined,undefined,0,this.world.undergroundAt(this.player.position.x,this.player.position.y,this.player.position.z));
+    this.weapon.shells.onLand=position=>this.audio.play('shell',position,this.player.camera.position,this.player.yaw,this.world.undergroundAt(position.x,position.y,position.z));
     this.weapon.onFire = (o, d, melee) => { this.combat.shoot(this.player, o, d, melee); };
-    this.bots.forEach(bot => { bot.onFire = (b,t,m) => this.combat.botShoot(b,t,m); });
+    this.bots.forEach(bot => { bot.canFire=(b,t)=>this.combat.muzzleClear(b,t);bot.onSound=(name,position)=>{this.audio.play(name,position,this.player.camera.position,this.player.yaw,this.world.undergroundAt(position.x,position.y,position.z));if(name==='bolt-eject')this.weapon.shells.eject(this.combat.muzzle(bot),bot.model.root.rotation.y);};bot.onFire = (b,t,m) => this.combat.botShoot(b,t,m); });
     this.player.onAttack = () => this.weapon.attack(); this.player.onReload = () => this.weapon.reload(); this.player.onWeapon = n => this.weapon.select(n);
     this.capture.onCapture = (point, owner) => {this.hud.notify(`${point.id} ${point.name} · ${owner === 'cn' ? '中国方占领' : owner === 'jp' ? '日军占领' : '已中立'}`);this.bots.forEach(b=>b.requestReplan(this.time));};
     this.player.onLock = locked => { this.paused = !locked; this.audio.pause(!locked); if (locked) this.hud.menu.hidden = true; else this.hud.showMenu(); };
@@ -44,17 +50,22 @@ export class Game {
     window.addEventListener('resize', () => this.engine.resize(),{signal:this.events.signal});
   }
   start() { if (!this.started || this.match.winner) this.reset(); this.started = true; void this.audio.start().catch(()=>{}); void this.player.lock(); }
-  reset() { this.audio.reset();if(this.diagnostics)this.diagnostics.restarts++;this.time = 0; this.match.reset(); this.capture.reset(); this.player.kills = 0; this.player.deaths = 0; this.player.respawn(); this.weapon.reset(); this.bots.forEach(b => b.respawn(0)); this.effects.reset();this.hud.messageUntil = 0; this.hud.hitUntil = 0; this.hud.hurtUntil = 0; this.hud.root.querySelector('h1')!.innerHTML = '烽火<span>乡关</span>'; }
+  reset() { this.pressure.reset();this.stepClock=0;this.world.routePlanner.clear();this.audio.reset();if(this.diagnostics)this.diagnostics.restarts++;this.time = 0; this.match.reset(); this.capture.reset(); this.player.kills = 0; this.player.deaths = 0; this.player.respawn(); this.weapon.reset(); this.bots.forEach(b => b.respawn(0)); this.effects.reset();this.hud.messageUntil = 0; this.hud.hitUntil = 0; this.hud.hurtUntil = 0; this.hud.root.querySelector('h1')!.innerHTML = '烽火<span>乡关</span>'; }
   dispose(){this.events.abort();this.engine.stopRenderLoop();this.diagnostics?.dispose();this.player.dispose();this.hud.dispose();this.audio.dispose();this.scene.dispose();this.engine.dispose();}
   step(dt: number) {
     this.time += dt;
     for (const actor of this.actors) if (!actor.alive && this.time >= actor.respawnAt) { if (actor instanceof Bot) actor.respawn(this.time); else { this.player.respawn(); this.weapon.reset(); } }
     this.player.protection = Math.max(0, this.player.protection - dt); this.player.update(dt); this.weapon.update(dt, this.time);
+    this.pressure.update(dt,this.bots,this.player);
     for (const b of this.bots) b.update(dt, this.time, this.actors, this.objectives, this.visible);
+    this.world.routePlanner.tick();
     this.separateActors();
     this.capture.update(dt, this.actors); this.match.update(dt, this.capture);
     this.captureVisuals.update(this.time);this.effects.update(dt);const underground=this.world.undergroundAt(this.player.position.x,this.player.position.y,this.player.position.z);this.ambient.intensity=underground?.25:.8;this.sun.intensity=underground?.04:.9;this.lamp.intensity=underground?1.5:0;if(underground){let nearest=this.world.lamps[0];for(const p of this.world.lamps)if(Vector3.DistanceSquared(p,this.player.position)<Vector3.DistanceSquared(nearest,this.player.position))nearest=p;this.lamp.position.copyFrom(nearest);}
-    this.stepClock+=dt;if(this.player.moving&&this.stepClock>(this.player.sprinting?.29:.44)){this.audio.play('step');this.stepClock=0;}
+    this.audio.update(dt,this.player.camera.position,this.player.yaw,underground);
+    this.stepClock+=this.player.moveSpeed*dt;if(this.player.alive&&this.player.moving&&this.player.velocityY===0&&this.stepClock>(this.player.sprinting?1.9:1.65)){
+      this.audio.play('step-'+this.world.footstepAt(this.player.position));this.stepClock=0;
+    }
     if (this.match.winner) { this.paused = true; document.exitPointerLock(); this.hud.win(); }
   }
   separateActors(){

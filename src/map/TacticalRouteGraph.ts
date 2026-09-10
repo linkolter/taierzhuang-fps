@@ -7,10 +7,19 @@ export type Level='surface'|'high'|'low'|'tunnel';
 export type TacticalRoute='main'|'north'|'south'|'tunnel';
 export interface RouteNode { id:number; position:Vector3; level:Level; routeType:TacticalRoute; combatRouteType:typeof ROUTE_TYPES[TacticalRoute]; objectiveId?:string; coverValue:number }
 export interface RouteEdge { to:number; cost:number; type:'normal'|'stairs'|'slope'|'tunnelEntrance' }
+class SearchWorkspace {
+  costs:Float64Array;parents:Int32Array;closed:Uint8Array;heapIds:number[]=[];heapScores:number[]=[];heapSize=0;
+  constructor(size:number){this.costs=new Float64Array(size);this.parents=new Int32Array(size);this.closed=new Uint8Array(size);}
+  push(id:number,f:number){let i=this.heapSize++;while(i>0){const p=(i-1)>>1;if(this.heapScores[p]<=f)break;this.heapIds[i]=this.heapIds[p];this.heapScores[i]=this.heapScores[p];i=p;}this.heapIds[i]=id;this.heapScores[i]=f;}
+  pop(){const first=this.heapIds[0],lastId=this.heapIds[--this.heapSize],lastScore=this.heapScores[this.heapSize];if(this.heapSize){let i=0;while(i*2+1<this.heapSize){let child=i*2+1;if(child+1<this.heapSize&&this.heapScores[child+1]<this.heapScores[child])child++;if(lastScore<=this.heapScores[child])break;this.heapIds[i]=this.heapIds[child];this.heapScores[i]=this.heapScores[child];i=child;}this.heapIds[i]=lastId;this.heapScores[i]=lastScore;}return first;}
+
+}
+
 /** Extends the existing ground waypoint grid with explicit underground links. Scratch storage is reused. */
 export class TacticalRouteGraph {
   nodes:RouteNode[]=[];edges:RouteEdge[][]=[];searches=0;failed=0;
-  private costs!:Float64Array;private parents!:Int32Array;private closed!:Uint8Array;private heapIds:number[]=[];private heapScores:number[]=[];private heapSize=0;
+  cacheHits=0; cacheMisses=0; expanded=0;
+  private workspaces:SearchWorkspace[]=[];
   private spatialNodes=new Map<number,RouteNode[]>();
   private pathCache=new Map<string,Vector3[]>();
   constructor(public world:World){
@@ -30,7 +39,7 @@ export class TacticalRouteGraph {
       const lip=this.nodes[prev].position;for(const n of this.nodes)if(n.level!=='tunnel'&&groundLane(n.position.z)===groundLane(lip.z)&&Vector3.DistanceSquared(lip,n.position)<16&&this.walkableLink(lip,n.position))this.link(prev,n.id,'tunnelEntrance');
     }
     for(const n of this.nodes){const key=this.spatialKey(Math.floor(n.position.x/4),Math.floor(n.position.z/4));let bucket=this.spatialNodes.get(key);if(!bucket){bucket=[];this.spatialNodes.set(key,bucket);}bucket.push(n);}
-    this.costs=new Float64Array(this.nodes.length);this.parents=new Int32Array(this.nodes.length);this.closed=new Uint8Array(this.nodes.length);
+
   }
   levelAt(p:Vector3):Level{return p.y>0.6?'high':p.y<-.4?'low':'surface';}
   add(position:Vector3,level:Level,routeType:TacticalRoute){const id=this.nodes.length;this.nodes.push({id,position,level,routeType,combatRouteType:ROUTE_TYPES[routeType],coverValue:0});this.edges.push([]);return id;}
@@ -47,15 +56,21 @@ export class TacticalRouteGraph {
     }return best;
   }
   walkableLink(a:Vector3,b:Vector3){if(!this.world.undergroundAt(a.x,a.y,a.z)&&!this.world.undergroundAt(b.x,b.y,b.z)&&!allowedSurfaceEdge(a,b))return false;const steps=Math.max(1,Math.ceil(Vector3.Distance(a,b)/.3));let lastY=a.y;for(let i=0;i<=steps;i++){const t=i/steps,x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t,y=this.world.floorAt(x,z,lastY);if(Math.abs(y-lastY)>.36||!this.world.canStand(x,y,z))return false;lastY=y;}return Math.abs(lastY-b.y)<.25;}
-  private push(id:number,f:number){let i=this.heapSize++;while(i>0){const p=(i-1)>>1;if(this.heapScores[p]<=f)break;this.heapIds[i]=this.heapIds[p];this.heapScores[i]=this.heapScores[p];i=p;}this.heapIds[i]=id;this.heapScores[i]=f;}
-  private pop(){const first=this.heapIds[0],lastId=this.heapIds[--this.heapSize],lastScore=this.heapScores[this.heapSize];if(this.heapSize){let i=0;while(i*2+1<this.heapSize){let child=i*2+1;if(child+1<this.heapSize&&this.heapScores[child+1]<this.heapScores[child])child++;if(lastScore<=this.heapScores[child])break;this.heapIds[i]=this.heapIds[child];this.heapScores[i]=this.heapScores[child];i=child;}this.heapIds[i]=lastId;this.heapScores[i]=lastScore;}return first;}
   find(start:Vector3,end:Vector3,preference:TacticalRoute='main'){
+    const search=this.findSteps(start,end,preference);let step=search.next();while(!step.done)step=search.next();return step.value;
+  }
+  /** Static topology is shared; each in-flight search leases scratch storage until completion/cancellation. */
+  *findSteps(start:Vector3,end:Vector3,preference:TacticalRoute='main'):Generator<void,Vector3[],void>{
     this.searches++;const s=this.nearest(start),e=this.nearest(end);if(s<0||e<0)return [];
-    const cacheKey=s+':'+e+':'+preference,cached=this.pathCache.get(cacheKey);if(cached){const path=cached.slice();if(this.walkableLink(this.nodes[e].position,end))path.push(end.clone());return path;}
-    this.costs.fill(Infinity);this.parents.fill(-1);this.closed.fill(0);this.heapSize=0;this.costs[s]=0;this.push(s,0);
-    while(this.heapSize){const id=this.pop();if(this.closed[id])continue;if(id===e){const path:Vector3[]=[];let n=e;while(n!==s&&n>=0){path.push(this.nodes[n].position);n=this.parents[n];}path.push(this.nodes[s].position);path.reverse();if(this.pathCache.size>=128)this.pathCache.delete(this.pathCache.keys().next().value!);this.pathCache.set(cacheKey,path.slice());if(this.walkableLink(this.nodes[e].position,end))path.push(end.clone());return path;}this.closed[id]=1;
-      for(const edge of this.edges[id]){if(this.closed[edge.to])continue;const node=this.nodes[edge.to],factor=node.routeType===preference?.48:1.2;const cost=this.costs[id]+edge.cost*factor;if(cost<this.costs[edge.to]){this.costs[edge.to]=cost;this.parents[edge.to]=id;this.push(edge.to,cost+Vector3.Distance(node.position,this.nodes[e].position)*.45);}}
+    const cacheKey=s+':'+e+':'+preference,cached=this.pathCache.get(cacheKey);if(cached){this.cacheHits++;this.pathCache.delete(cacheKey);this.pathCache.set(cacheKey,cached);const path=cached.slice();if(this.walkableLink(this.nodes[e].position,end))path.push(end.clone());return path;}
+    this.cacheMisses++;const work=this.workspaces.pop()??new SearchWorkspace(this.nodes.length);
+    try {
+    work.costs.fill(Infinity);work.parents.fill(-1);work.closed.fill(0);work.heapSize=0;work.costs[s]=0;work.push(s,0);
+    let iterations=0;
+    while(work.heapSize){if(++iterations%64===0)yield;this.expanded++;const id=work.pop();if(work.closed[id])continue;if(id===e){const path:Vector3[]=[];let n=e;while(n!==s&&n>=0){path.push(this.nodes[n].position);n=work.parents[n];}path.push(this.nodes[s].position);path.reverse();if(this.pathCache.size>=512)this.pathCache.delete(this.pathCache.keys().next().value!);this.pathCache.set(cacheKey,path.slice());if(this.walkableLink(this.nodes[e].position,end))path.push(end.clone());return path;}work.closed[id]=1;
+      for(const edge of this.edges[id]){if(work.closed[edge.to])continue;const node=this.nodes[edge.to],factor=node.routeType===preference?.48:1.2;const cost=work.costs[id]+edge.cost*factor;if(cost<work.costs[edge.to]){work.costs[edge.to]=cost;work.parents[edge.to]=id;work.push(edge.to,cost+Vector3.Distance(node.position,this.nodes[e].position)*.45);}}
     }this.failed++;return [];
+    } finally {this.workspaces.push(work);}
   }
 }
 

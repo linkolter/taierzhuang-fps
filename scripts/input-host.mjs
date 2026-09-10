@@ -1,0 +1,10 @@
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const browser=await chromium.launch({channel:'chrome',headless:false,args:['--remote-debugging-port=9223']});
+const context=await browser.newContext({viewport:{width:1280,height:720}});
+const guard=await context.newPage();await guard.setContent('<title>Input test guard</title><p>Independent input regression test</p>');
+const page=await context.newPage();await page.goto('http://127.0.0.1:5174');await page.waitForFunction(()=>window.__game);
+await page.evaluate(()=>{document.title='CTRL regression BASELINE';window.__game.engine.stopRenderLoop();});
+page.on('close',()=>console.log('BASELINE TAB CLOSED'));
+console.log('Input host ready on CDP 9223');
+await new Promise(resolve=>browser.on('disconnected',resolve));

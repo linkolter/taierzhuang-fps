@@ -98,3 +98,30 @@ node tests/soak.mjs
 结果和截图写入已忽略的 `test-results/`。`TEST_BROWSER=chrome` 可切换 Chrome；默认 Edge。详细完成记录见 `VALIDATION.md`。
 
 `topology.mjs` 检查两处地面通口、跨墙/跳跃封闭、地下重新连通三条战线及 F3 对象复用。`tactical.mjs` 用真实 AI 移动与碰撞走完跨层路线；键鼠脚本另用玩家控制器走过全部出口。`soak.mjs` 默认连续运行 900 秒真实时间，正常渲染并自动开始下一局；`SOAK_SECONDS` 和 `SOAK_NAME` 可指定时长及报告名称。此阶段按要求暂缓闪退根因调查，连续运行结果仅代表本机本次验证。
+
+## 本轮程序材质与战斗反馈
+
+本轮在保持 Combat Map V2、8v8 对局、TacticalRouteGraph、据点和性能优化框架不变的前提下，完成第一阶段环境材质与战斗反馈升级。
+
+主要内容包括：
+
+- 引入程序化环境材质体系，用于村庄地面、墙体、木材等低成本视觉表现；
+- 参考 Operation Ironhold 的实现思路，对战斗反馈系统进行增强；
+- 完成相关第三方参考与许可证记录；
+- 增加浏览器自动验收与真实 8v8 长时间测试；
+- 增加战斗反馈性能汇总脚本，用于后续回归检查。
+
+参考与许可：
+- [IRONHOLD_REFERENCE](docs/IRONHOLD_REFERENCE.md)
+- [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)
+
+模块入口与运行说明：
+- [COMBAT_FEEDBACK](docs/COMBAT_FEEDBACK.md)
+
+本机测试记录：
+- [COMBAT_FEEDBACK_VALIDATION](docs/COMBAT_FEEDBACK_VALIDATION.md)
+
+浏览器验收：
+
+```bash
+node tests/feedback-browser.mjs；真实 15 分钟 8v8：`node tests/feedback-soak.mjs`。两者需 dev server 与 Playwright，支持 `PLAYWRIGHT_MODULE`。长测完成后运行 `node scripts/report-feedback.mjs` 生成性能汇总。

@@ -2,6 +2,7 @@ import { FreeCamera, Scene, Vector3 } from '@babylonjs/core';
 import { CONFIG } from '../config/gameConfig';
 import { clamp, lerp } from '../core/math';
 import { World } from '../map/World';
+type KeyboardCapture = {lock(keys:string[]):Promise<void>;unlock():void};
 
 export class Player {
   readonly team = 'cn' as const;
@@ -11,25 +12,41 @@ export class Player {
   health: number = CONFIG.player.health;
   alive = true; respawnAt = 0; protection = 0; kills = 0; deaths = 0;
   private events=new AbortController();
+  private keyboard=(navigator as Navigator&{keyboard?:KeyboardCapture}).keyboard;
+  ctrlCrouchAvailable=false;
   keys = new Set<string>(); locked = false; ads = false; sprinting = false; moving = false; crouching = false;
+  moveSpeed=0; adsBlend=0; mouseX=0; mouseY=0; cameraKick=0;
   yaw = Math.PI / 2; pitch = 0; velocityY = 0; jumpQueued = false;
   onAttack = () => {}; onReload = () => {}; onWeapon = (_n: number) => {}; onLock = (_locked: boolean) => {};
   constructor(public scene: Scene, public canvas: HTMLCanvasElement, public world: World) {
     this.camera = new FreeCamera('player-camera', this.position.clone(), scene); this.camera.minZ = 0.05; this.camera.maxZ = 240; this.camera.fov = 1.18; this.camera.inputs.clear();
-    document.addEventListener('pointerlockchange', () => { this.locked = document.pointerLockElement === canvas; if (!this.locked) { this.keys.clear(); this.ads = false; } this.onLock(this.locked); },{signal:this.events.signal});
-    document.addEventListener('mousemove', e => { if (!this.locked || !this.alive) return; const s = CONFIG.player.sensitivity * (this.ads ? 0.6 : 1); this.yaw += e.movementX * s; this.pitch = clamp(this.pitch + e.movementY * s, -1.45, 1.45); },{signal:this.events.signal});
+    document.addEventListener('pointerlockchange', () => { this.locked = document.pointerLockElement === canvas; if (!this.locked) { this.clearInput();this.keyboard?.unlock();this.ctrlCrouchAvailable=false; } this.onLock(this.locked); },{signal:this.events.signal});
+    document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement){this.ctrlCrouchAvailable=false;this.keyboard?.unlock();this.clearInput();if(this.locked)document.exitPointerLock();}},{signal:this.events.signal});
+    document.addEventListener('mousemove', e => { if (!this.locked || !this.alive) return; const s = CONFIG.player.sensitivity * (this.ads ? 0.6 : 1); this.mouseX+=e.movementX;this.mouseY+=e.movementY;this.yaw += e.movementX * s; this.pitch = clamp(this.pitch + e.movementY * s, -1.45, 1.45); },{signal:this.events.signal});
     document.addEventListener('keydown', e => { if (!this.locked) return; if(e.code==='Escape'){document.exitPointerLock();return;} e.preventDefault(); this.keys.add(e.code); if (e.repeat) return; if(e.code==='Space')this.jumpQueued=true; if (e.code === 'KeyR') this.onReload(); if (e.code === 'Digit1') this.onWeapon(1); if (e.code === 'Digit2') this.onWeapon(2); },{signal:this.events.signal});
-    document.addEventListener('keyup', e => this.keys.delete(e.code),{signal:this.events.signal});
+    document.addEventListener('keyup', e => {if(this.locked)e.preventDefault();this.keys.delete(e.code);},{signal:this.events.signal});
     canvas.addEventListener('mousedown', e => { if (!this.locked || !this.alive) return; if (e.button === 0) this.onAttack(); if (e.button === 2) this.ads = true; },{signal:this.events.signal});
     document.addEventListener('mouseup', e => { if (e.button === 2) this.ads = false; },{signal:this.events.signal});
     canvas.addEventListener('contextmenu', e => e.preventDefault(),{signal:this.events.signal});
-    window.addEventListener('blur', () => { this.keys.clear(); this.ads = false; },{signal:this.events.signal});
+    window.addEventListener('blur', () => this.clearInput(),{signal:this.events.signal});
   }
-  dispose(){this.events.abort();this.keys.clear();}
-  async lock() { try { await this.canvas.requestPointerLock(); } catch { this.onLock(false); } }
+  private clearInput(){this.keys.clear();this.ads=false;this.jumpQueued=false;this.crouching=false;this.moving=false;this.sprinting=false;this.moveSpeed=0;this.mouseX=this.mouseY=0;}
+  dispose(){this.events.abort();this.clearInput();this.keyboard?.unlock();}
+  async lock() {
+    // Browser-reserved Ctrl+W cannot reliably be cancelled by keydown.preventDefault.
+    // Selective keyboard capture requires script fullscreen; leave Escape available.
+    this.ctrlCrouchAvailable=false;
+    if(this.keyboard){try {
+      if(!document.fullscreenElement)await document.documentElement.requestFullscreen();
+      await this.keyboard.lock(['KeyW','KeyA','KeyS','KeyD','KeyR','KeyC','Digit1','Digit2','Space','ControlLeft','ControlRight','ShiftLeft','ShiftRight']);
+      this.ctrlCrouchAvailable=true;
+    } catch { this.keyboard.unlock(); }}
+    try { await this.canvas.requestPointerLock(); } catch { this.keyboard?.unlock();this.ctrlCrouchAvailable=false;this.onLock(false); }
+  }
   update(dt: number) {
+    const oldX=this.position.x,oldZ=this.position.z;
     if (this.alive && this.locked) {
-      const p = CONFIG.player; const wantsCrouch = this.keys.has('ControlLeft') || this.keys.has('ControlRight') || this.keys.has('KeyC');
+      const p = CONFIG.player; const wantsCrouch = this.keys.has('KeyC') || this.ctrlCrouchAvailable&&(this.keys.has('ControlLeft') || this.keys.has('ControlRight'));
       this.crouching = wantsCrouch || !this.world.canStand(this.position.x, this.position.y, this.position.z);
       this.sprinting = (this.keys.has('ShiftLeft')||this.keys.has('ShiftRight')) && !this.ads && !this.crouching;
       let f = Number(this.keys.has('KeyW')) - Number(this.keys.has('KeyS')), r = Number(this.keys.has('KeyD')) - Number(this.keys.has('KeyA'));
@@ -42,9 +59,12 @@ export class Player {
       if(this.velocityY>0&&!this.world.canStand(this.position.x,nextY,this.position.z,p.radius,this.crouching?1.2:p.height))this.velocityY=0;else this.position.y=nextY;
       if (this.position.y < floor) { this.position.y = floor; this.velocityY = 0; }
     } else { this.moving = false; this.sprinting = false; }
+    this.moveSpeed=dt>0?Math.hypot(this.position.x-oldX,this.position.z-oldZ)/dt:0;this.moving=this.moveSpeed>.05;this.sprinting=this.sprinting&&this.moving;
+    const adsTarget=this.ads&&this.alive?1:0;this.adsBlend+=Math.sign(adsTarget-this.adsBlend)*Math.min(Math.abs(adsTarget-this.adsBlend),dt/.21);
+    this.cameraKick*=Math.exp(-dt*8);
     this.camera.position.copyFrom(this.position); this.camera.position.y += this.alive ? (this.crouching ? CONFIG.player.crouchEye : CONFIG.player.eye) : 0.48;
-    this.camera.rotation.set(this.pitch, this.yaw, 0);
-    this.camera.fov = lerp(this.camera.fov, this.ads && this.alive ? 0.64 : this.sprinting ? 1.25 : 1.18, Math.min(1, dt * 13));
+    this.camera.rotation.set(this.pitch-this.cameraKick, this.yaw, 0);
+    this.camera.fov = lerp(this.camera.fov, lerp(this.sprinting?1.25:1.18,.64,this.adsBlend), Math.min(1, dt * 13));
   }
-  respawn() { this.position.set(CONFIG.player.spawnX, 0, 0); this.health = CONFIG.player.health; this.alive = true; this.protection = CONFIG.match.spawnProtection; this.velocityY = 0; this.pitch = 0; this.yaw = Math.PI / 2; this.ads = false; }
+  respawn() { this.position.set(CONFIG.player.spawnX, 0, 0); this.health = CONFIG.player.health; this.alive = true; this.protection = CONFIG.match.spawnProtection; this.velocityY = 0; this.pitch = 0; this.cameraKick=0;this.adsBlend=0;this.mouseX=this.mouseY=0;this.yaw = Math.PI / 2; this.ads = false; }
 }

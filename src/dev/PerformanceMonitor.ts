@@ -6,6 +6,7 @@ type Sample={ms:number;inclusiveMs:number;calls:number};
 export class PerformanceMonitor{
  flags:Record<Switch,boolean>={DISABLE_AI:false,DISABLE_PATHFINDING:false,DISABLE_PERCEPTION:false,DISABLE_COVER:false,DISABLE_COLLISIONS_TEST:false,DISABLE_SHADOWS:false};
  samples:Record<string,any>[]=[];results:Record<string,any>[]=[];private restores:(()=>void)[]=[];private buckets:Record<string,Sample>={};private children:number[]=[];private frames=0;private cpuSum=0;private cpuMax=0;private frameStart=0;private windowStart=performance.now();private intervalSum=0;private intervalMax=0;private lastStart=0;private disposed=false;private running=false;
+ private cpuFrames:number[]=[];private intervals:number[]=[];private collisionStart=0;private candidateStart=0;private searchStart=0;
  private panel=document.createElement('section');private out=document.createElement('pre');private result=document.createElement('pre');private checks:HTMLInputElement[]=[];
  constructor(private g:Game){
   const instrumentation=new SceneInstrumentation(g.scene);this.restores.push(()=>instrumentation.dispose());
@@ -18,21 +19,23 @@ export class PerformanceMonitor{
   const wrap=(obj:any,key:string,bucket:string,disabled?:Switch,fallback?:()=>any)=>{
    const original=obj[key];const monitor=this;obj[key]=function(...args:any[]){if(disabled&&monitor.flags[disabled])return fallback?.();const start=performance.now();monitor.children.push(0);try{return original.apply(this,args);}finally{const elapsed=performance.now()-start,child=monitor.children.pop()!;if(monitor.children.length)monitor.children[monitor.children.length-1]+=elapsed;const value=monitor.buckets[bucket]??={ms:0,inclusiveMs:0,calls:0};value.ms+=elapsed-child;value.inclusiveMs+=elapsed;value.calls++;}};this.restores.push(()=>obj[key]=original);
   };
-  for(const b of g.bots)wrap(b,'update','AI','DISABLE_AI');
-  wrap(g.world.tactical,'find','Pathfinding','DISABLE_PATHFINDING',()=>[]);
+  for(const b of g.bots){wrap(b,'update','AI','DISABLE_AI');wrap(b.combat,'choose','Cover search','DISABLE_COVER');wrap(b.combat,'route','Local combat path');}
+  wrap(g.world.routePlanner,'tick','Pathfinding','DISABLE_PATHFINDING');
   wrap(g.world.tactical,'nearest','Waypoint selection');
   wrap(g.combat,'visible','Perception / LOS','DISABLE_PERCEPTION',()=>false);
   wrap(g.world,'blocked','Perception / LOS');wrap(g.world,'chooseCover','Cover search','DISABLE_COVER',()=>null);
   wrap(g.world,'canStand','Collision / Terrain','DISABLE_COLLISIONS_TEST',()=>true);
   for(const method of ['move','floorAt'])wrap(g.world,method,'Collision / Terrain');
-  wrap(g.scene,'pickWithRay','Mesh raycast');wrap(g.scene,'render','Render');
-  const begin=g.engine.onBeginFrameObservable.add(()=>{const now=performance.now();this.frameStart=now;if(this.lastStart){const interval=now-this.lastStart;this.intervalSum+=interval;this.intervalMax=Math.max(this.intervalMax,interval);}this.lastStart=now;});
-  const end=g.engine.onEndFrameObservable.add(()=>{const now=performance.now(),cpu=now-this.frameStart;this.frames++;this.cpuSum+=cpu;this.cpuMax=Math.max(this.cpuMax,cpu);if(now-this.windowStart>=1000)this.publish(now);});
+  wrap(g.world,'pickStaticRay','Mesh raycast');wrap(g.scene,'render','Render');
+  const begin=g.engine.onBeginFrameObservable.add(()=>{const now=performance.now();this.frameStart=now;if(this.lastStart){const interval=now-this.lastStart;this.intervals.push(interval);this.intervalSum+=interval;this.intervalMax=Math.max(this.intervalMax,interval);}this.lastStart=now;});
+  const end=g.engine.onEndFrameObservable.add(()=>{const now=performance.now(),cpu=now-this.frameStart;this.cpuFrames.push(cpu);this.frames++;this.cpuSum+=cpu;this.cpuMax=Math.max(this.cpuMax,cpu);if(now-this.windowStart>=1000)this.publish(now);});
+  this.resetWindow();
   this.restores.push(()=>{g.engine.onBeginFrameObservable.remove(begin);g.engine.onEndFrameObservable.remove(end);});
  }
- private resetWindow(){this.buckets={};this.frames=0;this.cpuSum=0;this.cpuMax=0;this.intervalSum=0;this.intervalMax=0;this.windowStart=performance.now();}
+ private resetWindow(){this.cpuFrames=[];this.intervals=[];this.collisionStart=this.g.world.collisionQueries;this.candidateStart=this.g.world.collisionCandidates;this.searchStart=this.g.world.tactical!.searches;this.buckets={};this.frames=0;this.cpuSum=0;this.cpuMax=0;this.intervalSum=0;this.intervalMax=0;this.windowStart=performance.now();}
  private publish(now:number){const g=this.g,seconds=(now-this.windowStart)/1000,frames=this.frames||1;const metrics:Record<string,any>={};for(const [key,value]of Object.entries(this.buckets))metrics[key]={selfMsPerFrame:value.ms/frames,inclusiveMsPerFrame:value.inclusiveMs/frames,callsPerSecond:value.calls/seconds};
-  const sample={fps:frames/seconds,frameMeanMs:this.intervalSum/frames,frameMaxMs:this.intervalMax,cpuFrameMeanMs:this.cpuSum/frames,cpuFrameMaxMs:this.cpuMax,metrics,meshes:g.scene.meshes.length,activeMeshes:g.scene.getActiveMeshes().length,materials:g.scene.materials.length,textures:g.scene.textures.length,drawCalls:g.engine._drawCalls.current,activeIndices:g.scene.getActiveIndices(),ai:g.bots.length,waypoints:g.world.tactical!.nodes.length,coverPoints:g.world.coverPoints.length,renderWidth:g.engine.getRenderWidth(),renderHeight:g.engine.getRenderHeight(),meshRaycastsPerSecond:(this.buckets['Mesh raycast']?.calls??0)/seconds,pathfindsPerSecond:(this.buckets.Pathfinding?.calls??0)/seconds,renderer:g.engine.getGlInfo(),shadowsEnabled:g.scene.shadowsEnabled,flags:{...this.flags}};
+  this.cpuFrames.sort((a,b)=>a-b);this.intervals.sort((a,b)=>a-b);const q=(a:number[],p:number)=>a[Math.floor((a.length-1)*p)]??0;
+  const sample={cpuP95Ms:q(this.cpuFrames,.95),cpuP99Ms:q(this.cpuFrames,.99),frameP95Ms:q(this.intervals,.95),frameP99Ms:q(this.intervals,.99),collisionCandidateMean:(g.world.collisionCandidates-this.candidateStart)/Math.max(1,g.world.collisionQueries-this.collisionStart),routeQueue:g.world.routePlanner.pending,routeCacheHits:g.world.tactical!.cacheHits,routeCacheMisses:g.world.tactical!.cacheMisses,fps:frames/seconds,frameMeanMs:this.intervalSum/frames,frameMaxMs:this.intervalMax,cpuFrameMeanMs:this.cpuSum/frames,cpuFrameMaxMs:this.cpuMax,metrics,meshes:g.scene.meshes.length,activeMeshes:g.scene.getActiveMeshes().length,materials:g.scene.materials.length,textures:g.scene.textures.length,drawCalls:g.engine._drawCalls.current,activeIndices:g.scene.getActiveIndices(),ai:g.bots.length,waypoints:g.world.tactical!.nodes.length,coverPoints:g.world.coverPoints.length,renderWidth:g.engine.getRenderWidth(),renderHeight:g.engine.getRenderHeight(),meshRaycastsPerSecond:(this.buckets['Mesh raycast']?.calls??0)/seconds,pathfindsPerSecond:(g.world.tactical!.searches-this.searchStart)/seconds,renderer:g.engine.getGlInfo(),shadowsEnabled:g.scene.shadowsEnabled,flags:{...this.flags}};
   this.samples.push(sample);if(this.samples.length>180)this.samples.shift();this.out.textContent=JSON.stringify(sample,null,1);this.resetWindow();
  }
  async isolate(modes:string[]=['ALL',...Object.keys(this.flags)]){if(this.running)return;this.running=true;this.results=[];const g=this.g,random=Math.random;this.checks.forEach(c=>c.disabled=true);

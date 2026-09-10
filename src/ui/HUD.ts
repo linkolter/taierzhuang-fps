@@ -11,7 +11,7 @@ export class HUD {
       <div id="weapon"><span id="weapon-name">三八式步枪</span><div><strong id="ammo">5</strong><small id="ammo-max"> / 5</small></div><span id="weapon-state">栓动 · 单发</span></div>
       <div id="controls">WASD 移动　Shift 奔跑　C 蹲下　Space 跳跃　右键 瞄准　R 装填　1 / 2 武器　Esc 暂停</div>
       <div id="death" hidden><small>你已阵亡</small><h2>坚守，等待增援</h2><p>将在 <strong id="respawn">5</strong> 秒后从西侧重生</p></div>
-      <div id="menu"><div class="menu-inner"><div class="eyebrow">1938 鲁南村镇 · COMBAT MAP V2</div><h1>烽火<span>乡关</span></h1><p class="subtitle">守住村庄，争夺每一寸土地。</p><div class="brief"><span>中国方 <b>你 + 7 AI</b></span><span>日军方 <b>8 AI</b></span><span>作战范围 <b>180 × 90 m</b></span></div><p id="menu-copy">争夺 A / B / C，控制多数据点消耗敌方兵力。<br>主街正面推进，高地争夺视野，低沟隐蔽接敌，地道转线绕后。</p><button id="start">开始作战 <span>→</span></button><p class="menu-help">点击后锁定鼠标 · Esc 暂停并释放鼠标<br>左键射击 / 挥砍　右键瞄准　R 换弹　1 步枪　2 大刀</p><div class="footnote">原创程序化场景与角色 · 单人离线 8 v 8</div></div></div>`;
+      <div id="menu"><div class="menu-inner"><div class="eyebrow">1938 鲁南村镇 · COMBAT MAP V2</div><h1>烽火<span>乡关</span></h1><p class="subtitle">守住村庄，争夺每一寸土地。</p><div class="brief"><span>中国方 <b>你 + 7 AI</b></span><span>日军方 <b>8 AI</b></span><span>作战范围 <b>180 × 90 m</b></span></div><p id="menu-copy">争夺 A / B / C，控制多数据点消耗敌方兵力。<br>主街正面推进，高地争夺视野，低沟隐蔽接敌，地道转线绕后。</p><button id="start">开始作战 <span>→</span></button><p class="menu-help">点击后全屏并锁定鼠标 · Esc 暂停并释放鼠标<br>C 下蹲；全屏按键捕获成功后也可用 Ctrl<br>左键射击 / 挥砍　右键瞄准　R 换弹　1 步枪　2 大刀</p><div class="footnote">原创程序化场景与角色 · 单人离线 8 v 8</div></div></div>`;
     this.menu = this.root.querySelector('#menu')!; this.startButton = this.root.querySelector('#start')!;
     this.startButton.addEventListener('click',this.clickStart);
   }
@@ -29,6 +29,7 @@ export class HUD {
     for (const team of ['cn','jp'] as const) { this.el(team + '-tickets').textContent = String(g.match.tickets[team]); this.el(team + '-bar').style.width = g.match.tickets[team] + '%'; }
     this.el('clock').textContent = g.match.elapsed >= CONFIG.match.duration ? '加时 · 下一次兵力优势决胜' : this.formatTime(CONFIG.match.duration - g.match.elapsed);
     this.html('objectives',g.capture.points.map(o => `<div class="objective ${o.owner ?? 'neutral'} ${o.contested ? 'contested' : ''}">${o.id}<i style="width:${Math.round(Math.abs(o.progress)*100)}%"></i></div>`).join(''));
+    this.html('controls',`WASD 移动　Shift 奔跑　${p.ctrlCrouchAvailable ? 'Ctrl / C' : 'C'} 蹲下　Space 跳跃　右键 瞄准　R 装填　1 / 2 武器　Esc 暂停`);
     this.el('health').textContent = String(p.health); this.el('health-bar').style.width = p.health + '%';
     this.el('ammo').textContent = w.slot === 1 ? String(w.ammo) : '刀'; this.el('ammo-max').textContent = w.slot === 1 ? ' / 5' : '';
     this.el('weapon-name').textContent = w.slot === 1 ? '三八式步枪' : '中国大刀';

@@ -9,7 +9,7 @@ export function prop(w:World,kind:PropKind,x:number,z:number){
  case 'well':for(const side of [-1,1]){box(kind,side*.8,.55,0,.35,1.1,1.8,stone);box(kind,0,.55,side*.8,1.3,1.1,.35,stone);box('well-post',side*.9,1.65,0,.13,2.2,.13,wood,false);}box('well-beam',0,2.7,0,2.1,.18,.18,wood,false);break;
  case 'hayStack':box(kind,0,.65,0,2,1.3,1.5,straw);box('hay-cap',0,1.4,0,1.6,.25,1.1,straw,false);break;
  case 'firewoodPile':for(let row=0;row<3;row++)for(let j=0;j<4-row;j++)box(kind,(j-(3-row)/2)*.32,.15+row*.28,0,.3,.28,1.6,wood);break;
- case 'grainSack':for(const side of [-1,1])box(kind,side*.4,.3,0,.7,.6,1,straw);box(kind,0,.82,0,.7,.5,1,straw);break;
+ case 'grainSack':{const sack=w.material('sack','#a09370');for(const side of [-1,1])box(kind,side*.4,.3,0,.7,.6,1,sack);box(kind,0,.82,0,.7,.5,1,sack);break;}
  case 'woodCrate':box(kind,0,.5,0,1,1,1);for(const side of [-1,1])box('crate-strap',side*.3,.5,-.51,.08,1.05,.06,stone,false);break;
  case 'brokenWall':box(kind,-.8,1,0,1.4,2,.55,mud);box(kind,.3,.4,0,.8,.8,.55,stone);box('rubble',1,.15,.3,.7,.3,.8,stone,false);break;
  case 'woodFence':for(let i=-2;i<=2;i++)box(kind,i*.5,.6,0,.12,1.2,.12);box('fence-rail',0,.8,0,2.3,.13,.12);break;

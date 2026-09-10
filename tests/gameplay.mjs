@@ -19,7 +19,8 @@ const checks = await page.evaluate(() => {
   g.match.tickets.jp=1; jp.respawn(0); jp.protection=0; g.combat.damage(jp,cn,100); g.step(.01); checks.victory=g.match.winner==='cn' && !g.hud.menu.hidden;
   g.reset(); checks.restart=g.match.winner===null && g.match.tickets.jp===100 && g.bots.every(b=>b.alive) && g.capture.points.every(p=>p.owner===null);
   g.player.protection=0; g.combat.damage(g.player,jp,150,true); checks.playerDeath=!g.player.alive; g.time=g.player.respawnAt; g.step(.01); checks.playerRespawn=g.player.alive && g.weapon.ammo===5;
-  g.reset(); const V=g.player.position.constructor; const fullRoster=g.combat.actors;g.combat.actors=[g.player,jp];jp.position.set(-75,0,0);jp.protection=0;
+  g.reset(); const V=g.player.position.constructor; const fullRoster=g.combat.actors;g.combat.actors=[g.player,jp];// V2 spawn court: keep this damage fixture before the new spawn-screen wall.
+jp.position.set(-78.3,0,0);jp.protection=0;
   g.combat.shoot(g.player,new V(-80,1,0),new V(1,0,0),false);checks.bodyRay=jp.health===25;
   jp.health=100;g.combat.shoot(g.player,new V(-80,1.58,0),new V(1,0,0),false);checks.headRay=!jp.alive;
   jp.respawn(0);jp.position.set(-78.3,0,0);jp.protection=0;g.combat.shoot(g.player,new V(-80,1.2,0),new V(1,0,0),true);checks.meleeHit=!jp.alive;

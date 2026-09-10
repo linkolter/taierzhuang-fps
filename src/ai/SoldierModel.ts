@@ -1,8 +1,9 @@
+import {boltPose} from '../weapons/BoltTimeline';
 import { Mesh, MeshBuilder, Scene, TransformNode } from '@babylonjs/core';
 import type { Team } from '../config/gameConfig';
 import { World } from '../map/World';
 export class SoldierModel {
-  root: TransformNode; torso: TransformNode; leftLeg!: TransformNode; rightLeg!: TransformNode; leftArm!: TransformNode; rightArm!: TransformNode; gun: TransformNode; blade: TransformNode; meshes: Mesh[] = [];
+  bolt:TransformNode;root: TransformNode; torso: TransformNode; leftLeg!: TransformNode; rightLeg!: TransformNode; leftArm!: TransformNode; rightArm!: TransformNode; gun: TransformNode; blade: TransformNode; meshes: Mesh[] = [];
   constructor(scene: Scene, world: World, team: Team, variant: number) {
     this.root = new TransformNode('soldier-' + team, scene); this.torso = new TransformNode('upper-body', scene); this.torso.parent = this.root;
     const uniform = world.material(team + '-uniform', team === 'cn' ? '#838f90' : '#a29353');
@@ -31,9 +32,11 @@ export class SoldierModel {
       const pieces = this.meshes.filter(m => m.parent === parent); for (const m of pieces) { m.parent = null; m.computeWorldMatrix(true); }
       const merged = Mesh.MergeMeshes(pieces, true, true, undefined, false, true); if (merged) { merged.parent = parent; merged.isPickable = false; }
     }
+    this.bolt=new TransformNode('soldier-bolt',scene);this.bolt.parent=this.gun;this.bolt.position.set(0,.045,.2);part('soldier-bolt-handle',[.09,.02,.02],[.055,0,0],metal,this.bolt);
     this.meshes = this.root.getChildMeshes() as Mesh[];
   }
-  update(time: number, moving: boolean, engaging: boolean, melee: boolean, shot: number, deadAge: number) {
+  update(time: number, moving: boolean, engaging: boolean, melee: boolean, shot: number, deadAge: number,boltPhase=0,reloading=false) {
+    const pose=boltPose(boltPhase);this.bolt.position.z=.2-pose.back*.1;this.bolt.rotation.z=pose.lift;this.gun.rotation.z=pose.tilt*.13;this.gun.rotation.x=reloading?.35:0;
     const stride = moving ? Math.sin(time * 10) * .65 : 0;
     this.leftLeg.rotation.x = stride; this.rightLeg.rotation.x = -stride;
     this.leftArm.rotation.x = engaging ? -1.3 : -.7 - stride * .3; this.rightArm.rotation.x = melee ? -1.3 + Math.sin(shot * Math.PI) * 1.8 : -1.25;

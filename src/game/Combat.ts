@@ -5,6 +5,7 @@ import type { Bot } from '../ai/Bot';
 import { World } from '../map/World';
 export class Combat {
   private sightOrigin=new Vector3();private sightEnd=new Vector3();
+  onImpact=(_position:Vector3,_material:string,_melee:boolean)=>{};
   onDeath = (_victim: Actor, _attacker: Actor, _head: boolean) => {};
   onHit = (_victim: Actor, _attacker: Actor, _head: boolean) => {};
   onShot = (_origin: Vector3, _end: Vector3, _team: string, _melee: boolean) => {};
@@ -14,7 +15,7 @@ export class Combat {
   shoot(attacker: Actor, origin: Vector3, direction: Vector3, melee: boolean) {
     const range = melee ? CONFIG.melee[attacker.team].range : CONFIG.rifle.range;
     const ray = new Ray(origin, direction, range); let distance: number = range, victim: Actor | null = null, head = false;
-    const wall = this.world.scene.pickWithRay(ray, m => !!m.metadata?.solid); if (wall?.hit) distance = wall.distance;
+    const wall = this.world.pickStaticRay(ray); if (wall?.hit) distance = wall.distance;
     for (const a of this.actors) {
       if (!a.alive || a.id === attacker.id) continue;
       const height = a.crouching ? 1.15 : 1.7;
@@ -26,12 +27,15 @@ export class Combat {
       if (melee) { const d = center.subtract(origin); const len = d.length(); if (len < distance && len < range && Vector3.Dot(d.normalize(), direction) > .65 && !this.world.blocked(origin, center)) { victim = a; distance = len; head = false; } }
     }
     const end = origin.add(direction.scale(distance)); this.onShot(origin, end, attacker.team, melee);
+    if(victim)this.onImpact(end,'body',melee);else if(wall?.hit&&distance===wall.distance){const name=wall.pickedMesh?.material?.name??'';this.onImpact(end,name.includes('wood')?'wood':name.includes('stone')||name.includes('roof')?'stone':'earth',melee);}
     if (victim && victim.team !== attacker.team) this.damage(victim, attacker, melee ? CONFIG.melee[attacker.team].damage : head ? CONFIG.rifle.headDamage : CONFIG.rifle.bodyDamage, head);
     return { victim: victim?.id ?? null, head, end };
   }
+  muzzle(bot:Bot){const yaw=bot.model.root.rotation.y;return bot.position.add(new Vector3(Math.sin(yaw)*.9+Math.cos(yaw)*.16,bot.crouching?.78:1.12,Math.cos(yaw)*.9-Math.sin(yaw)*.16));}
+  muzzleClear(bot:Bot,target:Actor){const muzzle=this.muzzle(bot),chest=bot.position.add(new Vector3(0,bot.crouching?.78:1.12,0));return !this.world.blocked(chest,muzzle)&&!this.world.blocked(muzzle,target.position.add(new Vector3(0,target.crouching?.8:1.12,0)));}
   botShoot(bot: Bot, target: Actor, melee: boolean) {
-    const o = bot.position.add(new Vector3(0, 1.35, 0)), end = target.position.add(new Vector3(0, target.crouching ? .8 : 1.12, 0));
-    if (!melee) { const d = Vector3.Distance(o, end); const probability = CONFIG.ai.accuracyNear + (CONFIG.ai.accuracyFar - CONFIG.ai.accuracyNear) * Math.min(1, d / CONFIG.ai.sight); if (Math.random() > probability) { const miss = .75 + d * .025; end.x += (Math.random() < .5 ? -1 : 1) * miss; end.y += (Math.random() - .3) * miss; end.z += (Math.random() - .5) * miss; } }
+    const o = melee?bot.position.add(new Vector3(0,1.2,0)):this.muzzle(bot), end = target.position.add(new Vector3(0, target.crouching ? .8 : 1.12, 0));
+    if (!melee) { const d = Vector3.Distance(o, end); const probability=(CONFIG.ai.accuracyNear+(CONFIG.ai.accuracyFar-CONFIG.ai.accuracyNear)*Math.min(1,d/CONFIG.ai.sight))*(target.id===0&&!bot.preciseAgainstPlayer?.2:1); if (Math.random() > probability) { const miss = .75 + d * .025; end.x += (Math.random() < .5 ? -1 : 1) * miss; end.y += (Math.random() - .3) * miss; end.z += (Math.random() - .5) * miss; } }
     this.shoot(bot, o, end.subtract(o).normalize(), melee);
   }
   raySphere(o: Vector3, d: Vector3, c: Vector3, radius: number) { const oc = o.subtract(c), b = Vector3.Dot(oc, d), disc = b * b - oc.lengthSquared() + radius * radius; return disc >= 0 && -b - Math.sqrt(disc) >= 0 ? -b - Math.sqrt(disc) : Infinity; }

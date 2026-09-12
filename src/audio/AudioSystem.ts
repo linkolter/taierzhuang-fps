@@ -9,6 +9,9 @@ const sounds:Record<string,Layer[]>={
  'bolt-forward':[{duration:.15,hz:2100,end:1000,gain:.13}],
  'bolt-lock':[{duration:.06,hz:2500,gain:.25},{duration:.035,hz:780,gain:.11,tone:true}],
  reload:[{duration:.17,hz:700,gain:.12}],
+ 'reload-open':[{duration:.12,hz:2400,end:900,gain:.2}],
+ 'reload-clip':[{duration:.06,hz:3500,gain:.19,tone:true},{duration:.08,hz:1600,gain:.12,delay:.08}],
+ 'reload-press':[{duration:.16,hz:850,end:1700,gain:.15},{duration:.04,hz:2300,gain:.09,delay:.12}],
  'reload-feed':[{duration:.07,hz:3000,gain:.17},{duration:.06,hz:1800,gain:.12,delay:.09}],
  'reload-close':[{duration:.09,hz:2100,gain:.22}],
  shell:[{duration:.065,hz:4200,gain:.10,tone:true},{duration:.035,hz:2600,gain:.08,delay:.065}],
@@ -27,8 +30,8 @@ const sounds:Record<string,Layer[]>={
 export class ProceduralAudioSystem {
  context?:AudioContext;master?:GainNode;noise?:AudioBuffer;wind?:AudioBufferSourceNode;
  voices=new Set<()=>void>();surfaceBus?:GainNode;tunnelBus?:BiquadFilterNode;
- private permanent:AudioNode[]=[];private ambientAt=12;private underground=false;private busTunnel:boolean|undefined;private paused=false;
- reset(){for(const stop of [...this.voices])stop();this.ambientAt=12;}
+ private permanent:AudioNode[]=[];private ambientAt=12;private underground=0;private busTunnel=-1;private paused=false;
+ reset(){for(const stop of [...this.voices])stop();this.ambientAt=12;this.underground=0;this.busTunnel=-1;}
  dispose(){this.reset();try{this.wind?.stop();}catch{}for(const n of this.permanent)n.disconnect();this.permanent=[];void this.context?.close();}
  async start(){
   if(!this.context){const c=this.context=new AudioContext();const compressor=c.createDynamicsCompressor();compressor.threshold.value=-16;compressor.ratio.value=5;compressor.attack.value=.003;compressor.release.value=.18;
@@ -42,18 +45,20 @@ export class ProceduralAudioSystem {
   }this.paused=false;this.pause(false);await this.context.resume();
  }
  pause(paused:boolean){this.paused=paused;if(this.master&&this.context)this.master.gain.setTargetAtTime(paused?0:.26,this.context.currentTime,.04);}
- update(dt:number,position:Vector3,yaw:number,tunnel:boolean){
-  this.underground=tunnel;const c=this.context;if(!c||this.paused)return;
+ update(dt:number,position:Vector3,yaw:number,tunnel:boolean|number){
+  const blend=Number(tunnel);this.underground=blend;const c=this.context;if(!c||this.paused)return;
   const l=c.listener;l.positionX.value=position.x;l.positionY.value=position.y;l.positionZ.value=-position.z;l.forwardX.value=Math.sin(yaw);l.forwardY.value=0;l.forwardZ.value=-Math.cos(yaw);l.upX.value=0;l.upY.value=1;l.upZ.value=0;
-  if(this.surfaceBus&&this.busTunnel!==tunnel){this.busTunnel=tunnel;this.surfaceBus.gain.cancelScheduledValues(c.currentTime);this.surfaceBus.gain.setTargetAtTime(tunnel?.38:1,c.currentTime,.12);}
+  if(this.surfaceBus&&Math.abs(this.busTunnel-blend)>.005){this.busTunnel=blend;this.surfaceBus.gain.setTargetAtTime(1-.62*blend,c.currentTime,.12);this.tunnelBus!.frequency.setTargetAtTime(4500-2200*blend,c.currentTime,.12);}
   this.ambientAt-=dt;if(this.ambientAt<=0){this.ambientAt=12+Math.random()*20;const angle=Math.random()*Math.PI*2,kind=Math.random();const distant=position.add(new Vector3(Math.sin(angle)*100,5,Math.cos(angle)*100));this.play(kind<.48?'rifle':kind<.7?'artillery':'creak',kind<.7?distant:position.add(new Vector3(4,2,1)),position,yaw,tunnel);}
  }
- play(name:string,position?:Vector3,listener?:Vector3,_yaw=0,sourceTunnel=this.underground){
+ play(name:string,position?:Vector3,listener?:Vector3,_yaw=0,sourceTunnel:boolean|number=this.underground){
   const c=this.context;if(!c||c.state!=='running'||!this.master||!this.noise||this.paused)return;
   if(position&&listener&&Vector3.DistanceSquared(position,listener)>220**2)return;
   const layers=sounds[name]??sounds[name==='hit'?'impact-body':name==='step'?'step-earth':name==='bolt'?'bolt-lock':'impact-earth'];
   while(this.voices.size>=CONFIG.stability.audioVoices)this.voices.values().next().value?.();
-  const nodes:AudioNode[]=[],sources:(AudioBufferSourceNode|OscillatorNode)[]=[];const bus=sourceTunnel?this.tunnelBus!:this.surfaceBus!;
+  const nodes:AudioNode[]=[],sources:(AudioBufferSourceNode|OscillatorNode)[]=[];
+  const mix=Math.max(Number(sourceTunnel),this.underground),bus=c.createGain(),dry=c.createGain(),wet=c.createGain();dry.gain.value=1-mix;wet.gain.value=mix;
+  bus.connect(dry).connect(this.surfaceBus!);bus.connect(wet).connect(this.tunnelBus!);nodes.push(bus,dry,wet);
   let output:AudioNode=bus;
   if(position){const p=c.createPanner();p.panningModel='equalpower';p.distanceModel='inverse';p.refDistance=5;p.rolloffFactor=1.25;p.maxDistance=220;p.positionX.value=position.x;p.positionY.value=position.y;p.positionZ.value=-position.z;p.connect(bus);nodes.push(p);output=p;}
   let pending=layers.length,ended=false;

@@ -10,6 +10,8 @@ import { Terrain } from './Terrain';
 import { buildCoverPoints,type CoverPoint } from './CoverPoints';
 import { openShaft,rampAt,rampFloor } from './Topology';
 import { tunnelContains } from './TunnelGeometry';
+import { tunnelEnvironment } from './TunnelEnvironment';
+import { whiteboxFootstep } from '../audio/Footsteps';
 
 export interface Obstacle { x: number; z: number; w: number; d: number; bottom: number; top: number }
 export class World {
@@ -20,7 +22,7 @@ export class World {
   staticMeshIndex?:StaticMeshIndex;
   pickStaticRay(ray:Ray){this.staticMeshIndex??=new StaticMeshIndex(this.solids);return this.staticMeshIndex.pick(ray);}
   footSurfaces:{x:number;z:number;y:number;w:number;d:number;kind:'stone'|'wood'}[]=[];
-  footstepAt(p:Vector3){if(this.undergroundAt(p.x,p.y,p.z))return 'tunnel';for(const s of this.footSurfaces)if(Math.abs(p.y-s.y)<.2&&Math.abs(p.x-s.x)<=s.w/2&&Math.abs(p.z-s.z)<=s.d/2+.25)return s.kind;return 'earth';}
+  footstepAt(p:Vector3){if(this.undergroundAt(p.x,p.y,p.z))return 'tunnel';for(const s of this.footSurfaces)if(Math.abs(p.y-s.y)<.2&&Math.abs(p.x-s.x)<=s.w/2&&Math.abs(p.z-s.z)<=s.d/2+.25)return s.kind;return this.village?whiteboxFootstep(p.x,p.y,p.z):'earth';}
   materials = new Map<string, StandardMaterial>();
   solids: Mesh[] = [];
   lamps: Vector3[] = []; village = false; navigation?: Navigation;
@@ -45,7 +47,8 @@ export class World {
   chooseCover(pos:Vector3,enemy:Vector3,id:number){let best:CoverPoint|null=null,score=Infinity;for(const p of this.coverPoints){if(p.reservedBy!==null&&p.reservedBy!==id||Math.abs(p.position.y-pos.y)>1.3)continue;const d=Vector3.DistanceSquared(pos,p.position);if(d>CONFIG.ai.coverRadius**2)continue;const dx=enemy.x-p.position.x,dz=enemy.z-p.position.z;if(dx*p.facing.x+dz*p.facing.z<0)continue;const eye=p.position.add(new Vector3(0,p.height==='crouch'?.85:1.35,0));const cover=this.blocked(eye,enemy.add(new Vector3(0,1.2,0)));const value=d+(cover?0:100);if(value<score){score=value;best=p;}}return best;}
   optimizeStatic() { const groups=new Map<string,Mesh[]>();for(const m of [...this.scene.meshes] as Mesh[]){if(m.parent||!m.material||m.name.startsWith('sign-'))continue;if(m.metadata?.staticChunk){m.freezeWorldMatrix();continue;}const key=m.material.uniqueId+':'+!!m.metadata?.solid+':'+Math.floor(m.position.x/30);if(!groups.has(key))groups.set(key,[]);groups.get(key)!.push(m);}this.solids=(this.scene.meshes as Mesh[]).filter(m=>m.metadata?.staticChunk&&m.metadata?.solid);for(const pieces of groups.values()){const solid=!!pieces[0].metadata?.solid;const mesh=pieces.length>1?Mesh.MergeMeshes(pieces,true,true):pieces[0];if(mesh){mesh.metadata={solid};mesh.isPickable=solid;mesh.receiveShadows=true;mesh.freezeWorldMatrix();if(solid)this.solids.push(mesh);}} }
   inRamp(x:number,z:number){return this.village&&openShaft(x,z,this.terrain.height);}
-  undergroundAt(x:number,y:number,z:number){return this.inRamp(x,z)||y<this.terrain.height(x,z)-.5;}
+  environmentAt(x:number,y:number,z:number){return tunnelEnvironment(this,x,y,z);}
+  undergroundAt(x:number,y:number,z:number){return this.environmentAt(x,y,z).blend>.05;}
   tunnelVolume(x:number,y:number,z:number,radius=0){return tunnelContains(x,z,radius);}
   floorAt(x:number,z:number,y=0){
     if(!this.village)return 0;const surface=this.terrain.height(x,z),r=rampAt(x,z);

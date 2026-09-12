@@ -1,5 +1,5 @@
 import { MeshBuilder, Scene, TransformNode, Vector3 } from '@babylonjs/core';
-import {BOLT_EVENTS,boltPose,type WeaponPose} from './BoltTimeline';
+import {BOLT_EVENTS,RELOAD_EVENTS,boltPose,type WeaponPose} from './BoltTimeline';
 import {ShellCasingPool} from '../effects/ShellCasingPool';
 import {MuzzleEffect} from '../effects/MuzzleEffect';
 import {ProceduralMaterialFactory} from '../map/ProceduralMaterialFactory';
@@ -49,7 +49,7 @@ export class Weapon {
     const cycling=this.slot===1&&this.cooldown>0;this.cooldown=Math.max(0,this.cooldown-dt);
     const phase=cycling?1-this.cooldown/CONFIG.rifle.cycle:0;
     if(cycling)while(this.boltEvent<BOLT_EVENTS.length&&phase>=BOLT_EVENTS[this.boltEvent].at){const event=BOLT_EVENTS[this.boltEvent++];this.onSound(event.sound);if(event.sound==='bolt-eject'){this.bolt.computeWorldMatrix(true);this.shells.eject(this.bolt.getAbsolutePosition(),this.player.yaw);}}
-    if(this.reloadTime>0){this.player.ads=false;this.reloadTime=Math.max(0,this.reloadTime-dt);const t=1-this.reloadTime/CONFIG.rifle.reload;const marks=[.2,.38,.56,.74,.92];while(this.reloadEvent<marks.length&&t>=marks[this.reloadEvent])this.onSound(++this.reloadEvent===marks.length?'reload-close':'reload-feed');if(this.reloadTime===0)this.ammo=CONFIG.rifle.capacity;}
+    if(this.reloadTime>0){this.player.ads=false;this.reloadTime=Math.max(0,this.reloadTime-dt);const t=1-this.reloadTime/CONFIG.rifle.reload;while(this.reloadEvent<RELOAD_EVENTS.length&&t>=RELOAD_EVENTS[this.reloadEvent].at)this.onSound(RELOAD_EVENTS[this.reloadEvent++].sound);if(this.reloadTime===0)this.ammo=CONFIG.rifle.capacity;}
     this.recoil*=Math.exp(-dt*10);this.swing=Math.max(0,this.swing-dt*2.6);
     const blend=this.player.adsBlend,ads=blend*blend*(3-2*blend),speed=this.player.moveSpeed;
     this.bobPhase+=speed*dt*2.4;this.bobWeight=lerp(this.bobWeight,Math.min(1,speed/4.2),1-Math.exp(-dt*16));
@@ -64,7 +64,9 @@ export class Weapon {
     this.root.position.z=.36-this.recoil*.1;
     this.rifle.rotation.x=lerp(this.rifle.rotation.x,-this.recoil*.11+(sprint?.28:0),smooth);
     this.rifle.rotation.z=lerp(this.rifle.rotation.z,pose.tilt*.17+(reload?-.4:0)+(sprint?-.16:0),smooth);
-    this.bolt.position.z=.23-pose.back*.14;this.bolt.rotation.z=pose.lift*1.05;
+    const reloadPhase=reload?1-this.reloadTime/CONFIG.rifle.reload:0;
+    const reloadOpen=reloadPhase>=.08&&reloadPhase<.92?1:0;
+    this.bolt.position.z=.23-Math.max(pose.back,reloadOpen)*.14;this.bolt.rotation.z=Math.max(pose.lift,reloadOpen)*1.05;
     this.blade.rotation.set(-Math.sin(this.swing*Math.PI)*1.4,-.3,Math.sin(this.swing*Math.PI)*1.8);
   }
 }

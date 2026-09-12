@@ -2,6 +2,8 @@ import { CONFIG, type Team } from '../config/gameConfig';
 import type { Actor, Objective } from '../game/types';
 import { OBJECTIVES } from '../map/MapLayout';
 import { clamp } from '../core/math';
+export type CaptureState='NEUTRAL'|'CHINESE'|'JAPANESE'|'CONTESTED';
+export const captureState=(p:CapturePoint):CaptureState=>p.contested?'CONTESTED':p.owner==='cn'?'CHINESE':p.owner==='jp'?'JAPANESE':'NEUTRAL';
 export interface CapturePoint extends Objective { name: string; contested: boolean; present: { cn: number; jp: number } }
 export class CaptureSystem {
   points: CapturePoint[] = OBJECTIVES.map(p=>({...p,owner:null,progress:0,contested:false,present:{cn:0,jp:0}}));

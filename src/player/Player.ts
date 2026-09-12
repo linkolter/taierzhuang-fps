@@ -2,6 +2,7 @@ import { FreeCamera, Scene, Vector3 } from '@babylonjs/core';
 import { CONFIG } from '../config/gameConfig';
 import { clamp, lerp } from '../core/math';
 import { World } from '../map/World';
+import { PlayerStuckRecovery } from './PlayerStuckRecovery';
 type KeyboardCapture = {lock(keys:string[]):Promise<void>;unlock():void};
 
 export class Player {
@@ -14,13 +15,15 @@ export class Player {
   private events=new AbortController();
   private keyboard=(navigator as Navigator&{keyboard?:KeyboardCapture}).keyboard;
   ctrlCrouchAvailable=false;
+  private inputBlocked=false;
   keys = new Set<string>(); locked = false; ads = false; sprinting = false; moving = false; crouching = false;
   moveSpeed=0; adsBlend=0; mouseX=0; mouseY=0; cameraKick=0;
+  stuckRecovery=new PlayerStuckRecovery();
   yaw = Math.PI / 2; pitch = 0; velocityY = 0; jumpQueued = false;
   onAttack = () => {}; onReload = () => {}; onWeapon = (_n: number) => {}; onLock = (_locked: boolean) => {};
   constructor(public scene: Scene, public canvas: HTMLCanvasElement, public world: World) {
     this.camera = new FreeCamera('player-camera', this.position.clone(), scene); this.camera.minZ = 0.05; this.camera.maxZ = 240; this.camera.fov = 1.18; this.camera.inputs.clear();
-    document.addEventListener('pointerlockchange', () => { this.locked = document.pointerLockElement === canvas; if (!this.locked) { this.clearInput();this.keyboard?.unlock();this.ctrlCrouchAvailable=false; } this.onLock(this.locked); },{signal:this.events.signal});
+    document.addEventListener('pointerlockchange', () => { this.locked = !this.inputBlocked && document.pointerLockElement === canvas; if (this.inputBlocked && document.pointerLockElement === canvas) document.exitPointerLock(); if (!this.locked) { this.clearInput();this.keyboard?.unlock();this.ctrlCrouchAvailable=false; } this.onLock(this.locked); },{signal:this.events.signal});
     document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement){this.ctrlCrouchAvailable=false;this.keyboard?.unlock();this.clearInput();if(this.locked)document.exitPointerLock();}},{signal:this.events.signal});
     document.addEventListener('mousemove', e => { if (!this.locked || !this.alive) return; const s = CONFIG.player.sensitivity * (this.ads ? 0.6 : 1); this.mouseX+=e.movementX;this.mouseY+=e.movementY;this.yaw += e.movementX * s; this.pitch = clamp(this.pitch + e.movementY * s, -1.45, 1.45); },{signal:this.events.signal});
     document.addEventListener('keydown', e => { if (!this.locked) return; if(e.code==='Escape'){document.exitPointerLock();return;} e.preventDefault(); this.keys.add(e.code); if (e.repeat) return; if(e.code==='Space')this.jumpQueued=true; if (e.code === 'KeyR') this.onReload(); if (e.code === 'Digit1') this.onWeapon(1); if (e.code === 'Digit2') this.onWeapon(2); },{signal:this.events.signal});
@@ -31,8 +34,19 @@ export class Player {
     window.addEventListener('blur', () => this.clearInput(),{signal:this.events.signal});
   }
   private clearInput(){this.keys.clear();this.ads=false;this.jumpQueued=false;this.crouching=false;this.moving=false;this.sprinting=false;this.moveSpeed=0;this.mouseX=this.mouseY=0;}
+  setInputBlocked(blocked: boolean) {
+    this.inputBlocked = blocked;
+    this.clearInput();
+    if (blocked) {
+      this.locked = false;
+      this.keyboard?.unlock();
+      this.ctrlCrouchAvailable = false;
+      if (document.pointerLockElement === this.canvas) document.exitPointerLock();
+    }
+  }
   dispose(){this.events.abort();this.clearInput();this.keyboard?.unlock();}
   async lock() {
+    if (this.inputBlocked) return;
     // Browser-reserved Ctrl+W cannot reliably be cancelled by keydown.preventDefault.
     // Selective keyboard capture requires script fullscreen; leave Escape available.
     this.ctrlCrouchAvailable=false;
@@ -41,16 +55,18 @@ export class Player {
       await this.keyboard.lock(['KeyW','KeyA','KeyS','KeyD','KeyR','KeyC','Digit1','Digit2','Space','ControlLeft','ControlRight','ShiftLeft','ShiftRight']);
       this.ctrlCrouchAvailable=true;
     } catch { this.keyboard.unlock(); }}
+    if (this.inputBlocked) { this.keyboard?.unlock();this.ctrlCrouchAvailable=false;return; }
     try { await this.canvas.requestPointerLock(); } catch { this.keyboard?.unlock();this.ctrlCrouchAvailable=false;this.onLock(false); }
   }
   update(dt: number) {
-    const oldX=this.position.x,oldZ=this.position.z;
+    const oldX=this.position.x,oldZ=this.position.z;let moveInput=false;
     if (this.alive && this.locked) {
       const p = CONFIG.player; const wantsCrouch = this.keys.has('KeyC') || this.ctrlCrouchAvailable&&(this.keys.has('ControlLeft') || this.keys.has('ControlRight'));
       this.crouching = wantsCrouch || !this.world.canStand(this.position.x, this.position.y, this.position.z);
       this.sprinting = (this.keys.has('ShiftLeft')||this.keys.has('ShiftRight')) && !this.ads && !this.crouching;
       let f = Number(this.keys.has('KeyW')) - Number(this.keys.has('KeyS')), r = Number(this.keys.has('KeyD')) - Number(this.keys.has('KeyA'));
       this.moving = f !== 0 || r !== 0; const length = Math.hypot(f, r) || 1; f /= length; r /= length;
+      moveInput=this.moving;
       const speed = (this.crouching ? p.crouch : this.sprinting ? p.sprint : p.walk) * (this.ads ? 0.65 : 1);
       this.world.move(this.position, (Math.sin(this.yaw) * f + Math.cos(this.yaw) * r) * speed * dt, (Math.cos(this.yaw) * f - Math.sin(this.yaw) * r) * speed * dt, this.crouching ? 1.2 : p.height, this.velocityY<=0&&this.position.y<=this.world.floorAt(this.position.x,this.position.z,this.position.y)+.02);
       const floor = this.world.floorAt(this.position.x, this.position.z, this.position.y);
@@ -59,12 +75,15 @@ export class Player {
       if(this.velocityY>0&&!this.world.canStand(this.position.x,nextY,this.position.z,p.radius,this.crouching?1.2:p.height))this.velocityY=0;else this.position.y=nextY;
       if (this.position.y < floor) { this.position.y = floor; this.velocityY = 0; }
     } else { this.moving = false; this.sprinting = false; }
-    this.moveSpeed=dt>0?Math.hypot(this.position.x-oldX,this.position.z-oldZ)/dt:0;this.moving=this.moveSpeed>.05;this.sprinting=this.sprinting&&this.moving;
+    const moved=Math.hypot(this.position.x-oldX,this.position.z-oldZ);
+    const recovered=this.alive&&this.stuckRecovery.update(dt,this.position,moveInput,moved,this.velocityY===0&&!this.jumpQueued,this.crouching,this.world);
+    if(recovered)this.velocityY=0;
+    this.moveSpeed=dt>0&&!recovered?moved/dt:0;this.moving=this.moveSpeed>.05;this.sprinting=this.sprinting&&this.moving;
     const adsTarget=this.ads&&this.alive?1:0;this.adsBlend+=Math.sign(adsTarget-this.adsBlend)*Math.min(Math.abs(adsTarget-this.adsBlend),dt/.21);
     this.cameraKick*=Math.exp(-dt*8);
     this.camera.position.copyFrom(this.position); this.camera.position.y += this.alive ? (this.crouching ? CONFIG.player.crouchEye : CONFIG.player.eye) : 0.48;
     this.camera.rotation.set(this.pitch-this.cameraKick, this.yaw, 0);
     this.camera.fov = lerp(this.camera.fov, lerp(this.sprinting?1.25:1.18,.64,this.adsBlend), Math.min(1, dt * 13));
   }
-  respawn() { this.position.set(CONFIG.player.spawnX, 0, 0); this.health = CONFIG.player.health; this.alive = true; this.protection = CONFIG.match.spawnProtection; this.velocityY = 0; this.pitch = 0; this.cameraKick=0;this.adsBlend=0;this.mouseX=this.mouseY=0;this.yaw = Math.PI / 2; this.ads = false; }
+  respawn(position?:Vector3) { this.clearInput();this.stuckRecovery.reset();if(position)this.position.copyFrom(position);else this.position.set(CONFIG.player.spawnX, 0, 0); this.health = CONFIG.player.health; this.alive = true; this.protection = CONFIG.match.spawnProtection; this.velocityY = 0; this.pitch = 0; this.cameraKick=0;this.adsBlend=0;this.mouseX=this.mouseY=0;this.yaw = Math.PI / 2; this.ads = false;this.update(0); }
 }

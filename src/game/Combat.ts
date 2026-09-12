@@ -3,16 +3,19 @@ import { CONFIG } from '../config/gameConfig';
 import type { Actor } from './types';
 import type { Bot } from '../ai/Bot';
 import { World } from '../map/World';
+import { inBase } from './SpawnSystem';
 export class Combat {
   private sightOrigin=new Vector3();private sightEnd=new Vector3();
   onImpact=(_position:Vector3,_material:string,_melee:boolean)=>{};
   onDeath = (_victim: Actor, _attacker: Actor, _head: boolean) => {};
   onHit = (_victim: Actor, _attacker: Actor, _head: boolean) => {};
   onShot = (_origin: Vector3, _end: Vector3, _team: string, _melee: boolean) => {};
+  lastWeapon='三八式';
   constructor(public world: World, public actors: Actor[]) {}
   visible(a: Actor, b: Actor) {this.sightOrigin.copyFrom(a.position);this.sightOrigin.y+=a.crouching?.9:1.4;this.sightEnd.copyFrom(b.position);this.sightEnd.y+=b.crouching?.85:1.2;return !this.world.blocked(this.sightOrigin,this.sightEnd);}
-  damage(victim: Actor, attacker: Actor, amount: number, head = false) { if (!victim.alive || victim.team === attacker.team || victim.protection > 0) return; victim.health = Math.max(0, victim.health - amount); this.onHit(victim, attacker, head); if (victim.health === 0) { victim.alive = false; this.onDeath(victim, attacker, head); } }
+  damage(victim: Actor, attacker: Actor, amount: number, head = false) { if (!victim.alive || victim.team === attacker.team || victim.protection > 0 || inBase(victim.position,victim.team) || inBase(attacker.position,attacker.team)) return; victim.health = Math.max(0, victim.health - amount); this.onHit(victim, attacker, head); if (victim.health === 0) { victim.alive = false; this.onDeath(victim, attacker, head); } }
   shoot(attacker: Actor, origin: Vector3, direction: Vector3, melee: boolean) {
+    attacker.protection=0;this.lastWeapon=melee?(attacker.team==='cn'?'大刀':'军刀'):'三八式';
     const range = melee ? CONFIG.melee[attacker.team].range : CONFIG.rifle.range;
     const ray = new Ray(origin, direction, range); let distance: number = range, victim: Actor | null = null, head = false;
     const wall = this.world.pickStaticRay(ray); if (wall?.hit) distance = wall.distance;

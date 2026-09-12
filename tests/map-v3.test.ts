@@ -11,7 +11,7 @@ function reachable(a:Vector3,b:Vector3,allowCross:boolean){const start=graph.nea
 after(()=>{scene.dispose();engine.dispose();});
 test('incremental and cached routes preserve endpoints, route preference and independent path arrays',()=>{
   for(const route of ['main','north','south','tunnel'] as const){
-    const start=surface(-82,0),end=surface(48,0),search=graph.findSteps(start,end,route);
+    const start=surface(-82,0),end=surface(OBJECTIVES[2].x,OBJECTIVES[2].z),search=graph.findSteps(start,end,route);
     let step=search.next(),yields=0;while(!step.done){yields++;step=search.next();}
     const first=step.value;assert.ok(first.length);const hits=graph.cacheHits,expanded=graph.expanded;
     const second=graph.find(start,end,route);assert.equal(graph.cacheHits,hits+1);assert.equal(graph.expanded,expanded);
@@ -42,7 +42,16 @@ test('actual bots queue births, capture changes, invalid paths, deaths and respa
   bots[1].respawn(time);update();assert.equal(world.routePlanner.has('objective:2'),true);assert.equal(world.tactical,topology);
   world.routePlanner.clear();for(const b of bots){b.model.root.dispose();}assert.equal(world.routePlanner.pending,0);
 });
-test('authored elevations, objective positions and protected spawn court remain within 180 × 90',()=>{assert.equal(MAP.width,180);assert.equal(MAP.depth,90);assert.deepEqual(OBJECTIVES.map(p=>[p.x,p.y,p.z]),[[-48,0,0],[0,1,0],[48,0,0]]);assert.equal(world.terrain.height(46,32),4);assert.ok(world.terrain.height(20,-28)<-1.3);for(const x of [-82,82])assert.ok(world.canStand(x,0,0));assert.ok(world.blocked(new Vector3(-82,1.56,0),new Vector3(82,1.56,0)));});
+test('V3 triangular objectives match their terrain elevation and both spawn courts remain protected',()=>{
+  assert.equal(MAP.width,180);assert.equal(MAP.depth,90);
+  assert.deepEqual(OBJECTIVES.map(p=>[p.x,p.y,p.z]),[[-48,3,28],[0,0,-7],[48,5,28]]);
+  const [a,b,c]=OBJECTIVES;
+  assert.ok(Math.abs((b.x-a.x)*(c.z-a.z)-(c.x-a.x)*(b.z-a.z))/2>1500);
+  for(const o of OBJECTIVES){assert.equal(world.terrain.height(o.x,o.z),o.y);assert.ok(world.canStand(o.x,o.y,o.z),o.id);}
+  for(let x=-88;x<=88;x+=2){const high=world.terrain.height(x,28),low=world.terrain.height(x,laneZ('south',x));assert.ok(high>=2&&high<=5);assert.ok(low>=-2&&low<=-1);}
+  for(const x of [-82,82])assert.ok(world.canStand(x,0,0));
+  assert.ok(world.blocked(new Vector3(-82,1.56,0),new Vector3(82,1.56,0)));
+});
 test('each of the three surface lanes traverses end to end without any tunnel or lane change',()=>{for(const lane of ['main','north','south'] as const)assert.ok(reachable(surface(-82,laneZ(lane,-82)),surface(82,laneZ(lane,82)),false),lane);});
 test('exactly two surface transfers connect lanes; removing them separates all three',()=>{assert.equal(SURFACE_CONNECTIONS.length,2);const points=[surface(0,0),surface(0,31),surface(20,-28)];for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){assert.ok(reachable(points[i],points[j],true));assert.equal(reachable(points[i],points[j],false),false);}for(const p of SURFACE_CONNECTIONS)assert.ok(graph.walkableLink(surface(p.x,p.z-2),surface(p.x,p.z+2)));});
 test('physical dividers stop standing, crouching and jumping away from the two gates',()=>{for(const p of SURFACE_CONNECTIONS)for(let x=-88;x<=88;x+=.5){if(Math.abs(x-p.x)<p.width/2+.6)continue;const y=world.terrain.height(x,p.z);for(const jump of [0,.85])assert.equal(world.canStand(x,y+jump,p.z,.33,1.2),false,`${x},${p.z},${jump}`);}});
@@ -50,3 +59,36 @@ test('every underground graph edge agrees with standing collision and floor heig
 test('all seven mouths join the central underground room with traversable ramps below 30 degrees',()=>{assert.equal(RAMPS.length,7);for(const r of RAMPS){const lip=surface(...r.lip),bottom=new Vector3(r.bottom[0],-4,r.bottom[1]);assert.ok(graph.find(new Vector3(0,-4,0),lip,'tunnel').length,r.id);assert.ok(graph.find(lip,new Vector3(0,-4,0),'tunnel').length,r.id);assert.ok(Math.atan2(lip.y+4,Math.hypot(lip.x-bottom.x,lip.z-bottom.z))*180/Math.PI<30);assert.equal(rampFloor(r,bottom.x,bottom.z,world.terrain.height),-4);}});
 test('main-street sampled sight lines stay within 55 metres, and high ground cannot cover A B C at once',()=>{const positions:Vector3[]=[];for(let x=-74;x<=74;x+=2)for(const offset of [-2,0,2]){const p=surface(x,laneZ('main',x)+offset);if(world.canStand(p.x,p.y,p.z))positions.push(p.add(new Vector3(0,1.56,0)));}for(let i=0;i<positions.length;i++)for(let j=i+1;j<positions.length;j++)if(Vector3.Distance(positions[i],positions[j])>55)assert.ok(world.blocked(positions[i],positions[j]));for(let x=-80;x<=80;x+=2)for(const offset of [-3,0,3]){const p=surface(x,laneZ('north',x)+offset);if(!world.canStand(p.x,p.y,p.z))continue;assert.ok(OBJECTIVES.some(o=>world.blocked(p.add(new Vector3(0,1.56,0)),new Vector3(o.x,o.y+1.4,o.z))));}});
 test('all explicit cover and peek positions remain reachable',()=>{assert.ok(world.coverPoints.length>=8);for(const p of world.coverPoints){assert.ok(world.canStand(p.position.x,p.position.y,p.position.z));assert.ok(graph.walkableLink(p.position,p.peek));}});
+
+test('both spawn courts reach all triangular objectives using surface connections alone',()=>{
+  for(const x of [-82,82])for(const o of OBJECTIVES)assert.ok(reachable(surface(x,0),surface(o.x,o.z),true),`${x} -> ${o.id}`);
+});
+
+test('collision movement traverses objective routes and all seven entrance ramps in both directions',()=>{
+  const walk=(start:Vector3,end:Vector3,preference:'main'|'tunnel')=>{
+    const path=graph.find(start,end,preference),p=start.clone();assert.ok(path.length);
+    for(const goal of path){
+      let steps=0;
+      while(Math.hypot(goal.x-p.x,goal.z-p.z)>.035&&steps++<600){
+        const dx=goal.x-p.x,dz=goal.z-p.z,distance=Math.hypot(dx,dz),scale=Math.min(.04,distance)/distance;
+        world.move(p,dx*scale,dz*scale);
+      }
+      assert.ok(steps<600,`stuck ${p} -> ${goal}`);
+      assert.ok(Math.abs(p.y-goal.y)<.3,`wrong floor ${p} -> ${goal}`);
+    }
+    assert.ok(Vector3.Distance(p,end)<.15);
+  };
+  for(const x of [-82,82])for(const o of OBJECTIVES)walk(surface(x,0),surface(o.x,o.z),'main');
+  for(const r of RAMPS){const lip=surface(...r.lip),bottom=new Vector3(r.bottom[0],-4,r.bottom[1]);walk(lip,bottom,'tunnel');walk(bottom,lip,'tunnel');}
+});
+
+test('whitebox surface uses plain materials and retains the existing terrain chunks',()=>{
+  const chunks=scene.meshes.filter(m=>m.metadata?.staticChunk);
+  assert.equal(chunks.length,36);
+  const surfaceMaterials=[...world.materials].filter(([name])=>name.startsWith('blockout-'));
+  assert.ok(surfaceMaterials.length>=5);
+  for(const [,material] of surfaceMaterials){assert.equal(material.diffuseTexture,null);assert.equal(material.bumpTexture,null);}
+  assert.equal(scene.meshes.some(m=>/sparse-tree|roof-tile|window-lattice|cart-wheel/.test(m.name)),false);
+  assert.equal(RAMPS.length,7);
+  for(const [id,lip] of [['T3',[-20,28]],['T6',[12,-28]],['T7',[28,7]],['T10',[76,4]]] as const)assert.deepEqual(RAMPS.find(r=>r.id===id)!.lip,lip);
+});

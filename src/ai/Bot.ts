@@ -1,5 +1,8 @@
 import {CombatBehavior} from './CombatBehavior';
-import {BOLT_EVENTS} from '../weapons/BoltTimeline';
+import type {StrategicRole} from './StrategicDirector';
+import {inBase} from '../game/SpawnSystem';
+import {rampAt} from '../map/Topology';
+import {BOLT_EVENTS,RELOAD_EVENTS} from '../weapons/BoltTimeline';
 import { Vector3 } from '@babylonjs/core';
 import { CONFIG, type Team } from '../config/gameConfig';
 import type { Actor, Objective } from '../game/types';
@@ -20,6 +23,8 @@ export class Bot implements Actor {
   canFire=(_bot:Bot,_target:Actor)=>true;onSound=(_name:string,_position:Vector3)=>{};
   onFire = (_bot: Bot, _target: Actor, _melee: boolean) => {};
   routeAnchor:Vector3|null=null;anchorVisited=false;
+  strategicObjective='';strategicRole:StrategicRole='ATTACK';
+  private reloadEvent=0;
   constructor(public id: number, public team: Team, public world: World) {
     const routes: Route[] = ['main', 'north', 'main', 'south', 'tunnel', 'north', 'main', 'south']; this.route = routes[(id - 1) % 8];
     this.model = new SoldierModel(world.scene, world, team, id); this.respawn(0);
@@ -34,13 +39,15 @@ export class Bot implements Actor {
   }
   chooseRoute(){if(this.world.undergroundAt(this.position.x,this.position.y,this.position.z))return;const routes:Route[]=['main','north','south','tunnel'];const preference:Route[]=['main','north','main','south','tunnel','north','main','south'];const preferred=preference[(this.id+Math.max(0,this.births-1)*3-1)%8];let best:Route=preferred,bestScore=Infinity;
     const bPressure=this.roster.filter(a=>a.alive&&a.team!==this.team&&Math.hypot(a.position.x,a.position.z)<15).length;const highThreat=this.roster.filter(a=>a.alive&&a.team!==this.team&&a.position.y>1.5&&a.position.z>16).length;
-    for(const route of routes){const count=this.roster.filter(a=>a instanceof Bot&&a.id!==this.id&&a.team===this.team&&a.alive&&a.route===route).length;let score=count*CONFIG.ai.routeCrowding+(route===preferred?-14:0)+Math.random()*10;if(route==='tunnel')score+=count*9+4;if(bPressure>=2&&(route==='south'||route==='tunnel'))score-=15;if(highThreat>0&&route==='north'&&count<2)score-=16;if(score<bestScore){bestScore=score;best=route;}}this.route=best;
+    for(const route of routes){const count=this.roster.filter(a=>a instanceof Bot&&a.id!==this.id&&a.team===this.team&&a.alive&&a.route===route).length;let score=count*CONFIG.ai.routeCrowding+(route===preferred?-14:0)+Math.random()*10;if(route==='tunnel')score+=count*9+4;if(this.strategicRole==='FLANK'&&route==='main')score+=25;if(bPressure>=2&&(route==='south'||route==='tunnel'))score-=15;if(highThreat>0&&route==='north'&&count<2)score-=16;if(score<bestScore){bestScore=score;best=route;}}this.route=best;
   }
   private *plan(objectives: Objective[]):Generator<void,void,void> {
 
     if(!this.routeAnchor)this.chooseRoute();this.dirty=false;
-    const sorted = [...objectives].sort((a, b) => this.score(a) - this.score(b)); const obj = sorted[0]; if (!obj) return; this.objective = obj.id;
-    const end=new Vector3(obj.x + (this.id % 3 - 1) * 2, obj.y??0, obj.z + (this.id % 2 ? 2 : -2));
+    const sorted = [...objectives].sort((a, b) => this.score(a) - this.score(b)); const obj = objectives.find(o=>o.id===this.strategicObjective)??sorted[0]; if (!obj) return; this.objective = obj.id;
+    const offsets=[[0,0],[2,2],[-2,2],[2,-2],[-2,-2],[4,0],[-4,0],[0,4],[0,-4]];
+    const goals=offsets.map(([x,z])=>new Vector3(obj.x+x,obj.y??0,obj.z+z)).filter(p=>!rampAt(p.x,p.z)&&this.world.canStand(p.x,p.y,p.z)&&Math.abs(this.world.floorAt(p.x,p.z,p.y)-p.y)<.15);
+    const end=goals[this.id%goals.length];if(!end){this.replanAt=this.currentTime+2;return;}
     // One authored staging point ensures a lane preference actually visits that lane.
     // Replanning retains this point until reached; the existing objective/combat FSM continues normally.
     if(!this.anchorVisited&&!this.routeAnchor&&(this.route==='north'||this.route==='south')){const c=CONFIG.tactics,x=(this.team==='cn'?-1:1)*(this.route==='north'?c.northAnchorX:c.southAnchorX),zz=this.route==='north'?c.northAnchorZ:c.southAnchorZ;this.routeAnchor=new Vector3(x,this.world.terrain.height(x,zz),zz);}
@@ -54,7 +61,7 @@ export class Bot implements Actor {
     if(!this.world.routePlanner.has(this.planKey)&&this.routeAnchor&&Vector3.Distance(this.position,this.routeAnchor)<CONFIG.tactics.anchorRadius){this.routeAnchor=null;this.anchorVisited=true;}
     this.roster=actors;this.moving = false;this.crouching=false; this.shot = Math.max(0, this.shot - dt * 2.8); this.protection = Math.max(0, this.protection - dt);
     if (!this.alive) {this.world.routePlanner.cancel(this.planKey);this.releaseCover(); this.state = 'Dead'; this.model.update(time, false, false, false, 0, time - this.deadAt); return; }
-    if(this.reloadUntil>0&&time>=this.reloadUntil){this.ammo=CONFIG.rifle.capacity;this.reloadUntil=0;this.emptySince=0;this.onSound('reload-close',this.position);}
+    if(this.reloadUntil>0){const phase=1-(this.reloadUntil-time)/CONFIG.rifle.reload;while(this.reloadEvent<RELOAD_EVENTS.length&&phase>=RELOAD_EVENTS[this.reloadEvent].at)this.onSound(RELOAD_EVENTS[this.reloadEvent++].sound,this.position);if(time>=this.reloadUntil){this.ammo=CONFIG.rifle.capacity;this.reloadUntil=0;this.emptySince=0;}}
     if(this.dirty&&time>=this.replanAt)this.queuePlan(objectives);
     if(this.boltUntil>0){const phase=1-(this.boltUntil-time)/CONFIG.rifle.cycle;while(this.boltEvent<BOLT_EVENTS.length&&phase>=BOLT_EVENTS[this.boltEvent].at)this.onSound(BOLT_EVENTS[this.boltEvent++].sound,this.position);if(time>=this.boltUntil)this.boltUntil=0;}
     this.think -= dt;
@@ -62,7 +69,10 @@ export class Bot implements Actor {
 
       const previousTarget=this.target;
       this.think = CONFIG.ai.thinkInterval + this.id * .003; let closest: number = Infinity; this.target = null;
-      for (const a of actors) { if (a.team === this.team || !a.alive || a.protection > 0) continue; const d = Vector3.Distance(a.position, this.position); const score=d*(a.id===0&&!this.preciseAgainstPlayer?1.9:1);if (d<CONFIG.ai.sight&&score<closest&&this.inView(a)&&visible(this,a)){this.target=a;closest=score;} }
+      const strategic=objectives.find(o=>o.id===this.strategicObjective);
+      for (const a of actors) { if (a.team === this.team || !a.alive || a.protection > 0 || inBase(a.position,a.team)) continue; const d = Vector3.Distance(a.position, this.position);
+        if(strategic&&d>18&&Math.hypot(a.position.x-strategic.x,a.position.z-strategic.z)>16)continue;
+        const score=d*(a.id===0&&!this.preciseAgainstPlayer?1.9:1);if (d<CONFIG.ai.sight&&score<closest&&this.inView(a)&&visible(this,a)){this.target=a;closest=score;} }
       if(this.target){if(this.knownTarget!==this.target.id||time-this.lastSeen>CONFIG.ai.lostSightWait){this.engagedSince=time;const attacked=time-this.damagedAt<1;this.reactionUntil=time+(attacked?.2:time-this.lastSeen<3?.3:.5)+Math.random()*(attacked?.2:time-this.lastSeen<3?.2:.3);this.nextShot=Math.max(this.nextShot,this.reactionUntil);this.knownTarget=this.target.id;}this.lastSeen=time;}else if(previousTarget?.alive&&time-this.lastSeen<CONFIG.ai.lostSightWait)this.target=previousTarget;
     }
     if (this.target?.alive) {
@@ -72,7 +82,7 @@ export class Bot implements Actor {
       if(this.ammo===0&&!this.emptySince)this.emptySince=time;
       if(this.ammo===0&&this.reloadUntil===0&&!melee&&time>=this.boltUntil){
         const safe=this.cover?this.coverArrived>0&&Vector3.DistanceSquared(this.position,this.cover.position)<.18:time-this.emptySince>2&&!this.moving;
-        if(safe){this.reloadUntil=time+CONFIG.rifle.reload;this.onSound('reload',this.position);}
+        if(safe){this.reloadEvent=0;this.reloadUntil=time+CONFIG.rifle.reload;this.onSound('reload',this.position);}
       }
       const ready=time>=this.nextShot&&time>=this.reactionUntil&&time>=this.boltUntil&&(melee||this.ammo>0&&this.reloadUntil===0);
       if(ready&&!this.crouching&&(!this.moving||melee)&&time>=this.fireCheckAt){
@@ -91,7 +101,7 @@ export class Bot implements Actor {
     } else {
       this.target = null;
       if(time-this.lastSeen<CONFIG.ai.lostSightWait){this.state='SearchEnemy';this.crouching=!!this.cover;this.syncModel(time);return;}
-      this.releaseCover();this.combat.reset();if(this.ammo===0&&this.reloadUntil===0&&time>=this.boltUntil){this.reloadUntil=time+CONFIG.rifle.reload;this.onSound('reload',this.position);}if (time >= this.replanAt) this.queuePlan(objectives);
+      this.releaseCover();this.combat.reset();if(this.ammo===0&&this.reloadUntil===0&&time>=this.boltUntil){this.reloadEvent=0;this.reloadUntil=time+CONFIG.rifle.reload;this.onSound('reload',this.position);}if (time >= this.replanAt) this.queuePlan(objectives);
       const goal = this.path[this.pathIndex];
       if (goal) { this.state = this.world.undergroundAt(this.position.x,this.position.y,this.position.z) ? 'TraverseTunnel':'MoveToObjective';this.followObjective(dt); }
       else { this.state = 'Capture'; if (!objectives.some(o => o.id === this.objective && o.owner !== this.team)) this.replanAt = Math.min(this.replanAt, time + 1); }

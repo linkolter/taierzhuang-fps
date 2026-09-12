@@ -1,3 +1,5 @@
+import {AIWorkScheduler} from '../ai/AIWorkScheduler';
+import {parseQuality,qualityScaling,type Quality} from '../config/quality';
 import { Color3, Color4, DirectionalLight, Engine, HemisphericLight, PointLight, Scene, Vector3 } from '@babylonjs/core';
 import { applyMapMaterials } from '../map/MapMaterials';
 import { World } from '../map/World';
@@ -32,9 +34,11 @@ export class Game {
   playerShots=0;playerHits=0;private spawnClock=0;
   spawnOptions:ReturnType<SpawnSystem['candidates']>=[];
   footsteps=new FootstepTracker();
+  aiWork=new AIWorkScheduler();quality:Quality=parseQuality(new URLSearchParams(location.search).get('quality'));
+  setQuality(value:string){this.quality=parseQuality(value);this.engine.setHardwareScalingLevel(qualityScaling(this.quality,window.devicePixelRatio,CONFIG.graphics.maxPixelRatio));this.engine.resize();}
   get objectives(): Objective[] { return this.capture.points; }
   constructor(canvas: HTMLCanvasElement) {
-    this.engine = new Engine(canvas, true); this.engine.setHardwareScalingLevel(Math.max(1,window.devicePixelRatio/CONFIG.graphics.maxPixelRatio)); this.scene = new Scene(this.engine); this.scene.clearColor = Color4.FromHexString('#c5c7bbff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=CONFIG.graphics.fogStart;this.scene.fogEnd=CONFIG.graphics.fogEnd;this.scene.fogColor=Color3.FromHexString('#c5c7bb');
+    this.engine = new Engine(canvas, true); this.engine.setHardwareScalingLevel(qualityScaling(this.quality,window.devicePixelRatio,CONFIG.graphics.maxPixelRatio)); this.scene = new Scene(this.engine); this.scene.clearColor = Color4.FromHexString('#c5c7bbff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=CONFIG.graphics.fogStart;this.scene.fogEnd=CONFIG.graphics.fogEnd;this.scene.fogColor=Color3.FromHexString('#c5c7bb');
     this.ambient = new HemisphericLight('sky', new Vector3(.3, 1, .2), this.scene); this.ambient.intensity = .8; this.ambient.groundColor = Color3.FromHexString('#71604b'); this.sun=new DirectionalLight('sun', new Vector3(-.5, -1, -.3), this.scene);this.sun.intensity=.9;
     this.lamp=new PointLight('nearest-oil-lamp',new Vector3(0,-2,-29),this.scene);this.lamp.diffuse=Color3.FromHexString('#f3b866');this.lamp.range=15;this.lamp.intensity=0;
     this.world = new World(this.scene); this.world.buildVillage(); applyMapMaterials(this.world);
@@ -79,7 +83,7 @@ export class Game {
     this.player.respawn(candidate.anchor!.position);this.weapon.reset();this.stepClock=0;this.footsteps.reset();
     this.paused=true;this.hud.el('death').hidden=true;void this.player.lock();return true;
   }
-  reset() { this.footsteps.reset();this.strategy.reset();this.scores.reset();this.selectedSpawn='BASE';this.spawnOptions=[];this.spawnClock=0;this.deathCause='';this.tunnelBlend=0;this.playerShots=this.playerHits=0;this.pressure.reset();this.stepClock=0;this.world.routePlanner.clear();this.audio.reset();if(this.diagnostics)this.diagnostics.restarts++;this.time = 0; this.match.reset(); this.capture.reset(); this.player.kills = 0; this.player.deaths = 0; this.player.respawn(); this.weapon.reset(); this.bots.forEach(b => {b.strategicObjective='';b.respawn(0);}); this.effects.reset();this.hud.messageUntil = 0; this.hud.hitUntil = 0; this.hud.hurtUntil = 0;this.hud.el('death').hidden=true; this.hud.root.querySelector('h1')!.innerHTML = '烽火<span>乡关</span>'; }
+  reset() { this.aiWork.reset();this.footsteps.reset();this.strategy.reset();this.scores.reset();this.selectedSpawn='BASE';this.spawnOptions=[];this.spawnClock=0;this.deathCause='';this.tunnelBlend=0;this.playerShots=this.playerHits=0;this.pressure.reset();this.stepClock=0;this.world.routePlanner.clear();this.audio.reset();if(this.diagnostics)this.diagnostics.restarts++;this.time = 0; this.match.reset(); this.capture.reset(); this.player.kills = 0; this.player.deaths = 0; this.player.respawn(); this.weapon.reset(); this.bots.forEach(b => {b.strategicObjective='';b.respawn(0);}); this.effects.reset();this.hud.messageUntil = 0; this.hud.hitUntil = 0; this.hud.hurtUntil = 0;this.hud.el('death').hidden=true; this.hud.root.querySelector('h1')!.innerHTML = '烽火<span>乡关</span>'; }
   dispose(){this.events.abort();this.engine.stopRenderLoop();this.mapOverview.dispose();this.diagnostics?.dispose();this.player.dispose();this.hud.dispose();this.audio.dispose();this.scene.dispose();this.engine.dispose();}
   step(dt: number) {
     if(this.match.winner)return;
@@ -88,7 +92,8 @@ export class Game {
     this.player.protection = Math.max(0, this.player.protection - dt); this.player.update(dt); this.weapon.update(dt, this.time);
     this.pressure.update(dt,this.bots,this.player);
     this.strategy.update(dt,this.time,this.bots,this.capture.points);
-    for (const b of this.bots) b.update(dt, this.time, this.actors, this.objectives, this.visible);
+    this.aiWork.beginFrame();
+    for (const b of this.bots) b.update(dt, this.time, this.actors, this.objectives, this.visible,this.aiWork);
     this.world.routePlanner.tick();
     this.separateActors();
     this.scores.presence(dt,this.capture.points,this.actors);this.capture.update(dt, this.actors); this.match.update(dt, this.capture);

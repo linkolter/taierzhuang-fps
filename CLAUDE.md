@@ -9,4 +9,9 @@
 - Map layout and collision ownership: `MapLayout.ts`, `Terrain.ts`, `TopologyGeometry.ts`, `TunnelGeometry.ts`, `BlockoutSurface.ts`. Gameplay rules must not silently change authored geometry.
 - Latest gameplay handoff and deferred collision list: `docs/BATTLEFIELD_GAMEPLAY_PASS.md`.
 - Combat Map V3 blockout handoff: `docs/COMBAT_MAP_V3_BLOCKOUT.md`.
-- Working branch: `battlefield-gameplay-pass`. V3 whitebox edits were already uncommitted at the start of this pass; preserve them.
+- Gameplay pass was completed at `0633cb7` and fast-forwarded into local `main`.
+- Performance Baseline Pass additions: `docs/PERFORMANCE_BASELINE.md`; current branch `performance-baseline-pass`.
+- MEDIUM is the standard profile; quality changes render resolution only. Preserve all gameplay constants and pool/voice limits across tiers.
+- Heavy AI work goes through `AIWorkScheduler` (3 perceptions / 2 decisions / 3 firing checks, at most 5 actors per frame); objective paths retain `RoutePlanningScheduler`. Never throttle movement or bypass fresh fire safety checks.
+- Performance harness: `tests/performance-baseline.mjs` (`PERF_SECONDS=900`, `PERF_QUALITY=MEDIUM`, `PERF_GPU=1`); actual wall time, no accelerated simulation. Compare GC-retained heap and bounded object counts, not raw allocation peaks alone.
+- Measure before optimizing; distinguish frame interval, main-thread CPU, render submission, and GPU query time. Stop this pass before art, models, or AI architecture changes.

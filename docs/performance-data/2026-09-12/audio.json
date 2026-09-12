@@ -1,0 +1,63 @@
+{
+  "equivalence": [
+    {
+      "mix": 0,
+      "maxError": 5.960464477539063e-8
+    },
+    {
+      "mix": 0.5,
+      "maxError": 5.960464477539063e-8
+    },
+    {
+      "mix": 1,
+      "maxError": 5.029141902923584e-8
+    }
+  ],
+  "timings": [
+    {
+      "mix": 0,
+      "before": {
+        "meanMs": 0.20149999991059303,
+        "p95Ms": 0.3999999761581421,
+        "nodesPerVoice": 12,
+        "samples": 400
+      },
+      "after": {
+        "meanMs": 0.1539999997615814,
+        "p95Ms": 0.20000004768371582,
+        "nodesPerVoice": 9,
+        "samples": 400
+      }
+    },
+    {
+      "mix": 0.5,
+      "before": {
+        "meanMs": 0.2070000007748604,
+        "p95Ms": 0.30000001192092896,
+        "nodesPerVoice": 12,
+        "samples": 400
+      },
+      "after": {
+        "meanMs": 0.21274999916553497,
+        "p95Ms": 0.30000001192092896,
+        "nodesPerVoice": 12,
+        "samples": 400
+      }
+    },
+    {
+      "mix": 1,
+      "before": {
+        "meanMs": 0.22525000005960463,
+        "p95Ms": 0.30000001192092896,
+        "nodesPerVoice": 12,
+        "samples": 400
+      },
+      "after": {
+        "meanMs": 0.1769999998807907,
+        "p95Ms": 0.30000001192092896,
+        "nodesPerVoice": 9,
+        "samples": 400
+      }
+    }
+  ]
+}

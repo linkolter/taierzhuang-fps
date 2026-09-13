@@ -25,12 +25,12 @@ export function buildBlockoutSurface(w: World) {
     { x: 55, z: 3, w: .7, d: 5, h: 2.6 },
   ];
   for (const p of walls) w.box('blockout-broken-court-wall', p.x, w.terrain.height(p.x, p.z) + p.h / 2, p.z, p.w, p.h, p.d, wall);
-  for (const c of COVERS) w.box('blockout-cover', c.x, w.terrain.height(c.x, c.z) + c.h / 2, c.z, c.w, c.h, c.d, cover);
+  for (const c of COVERS) w.box('blockout-cover', c.x, w.terrain.height(c.x, c.z) + c.h / 2, c.z, c.w, c.h, c.d, c.h>2?w.material('art-planks','#84705a'):cover);
   for (const p of STREET_BLOCKS) w.box('blockout-alley-screen', p.x, w.terrain.height(p.x, p.z) + 1.5, p.z, .7, 3, p.d, wall);
   for (const x of [-77, 77]) w.box('spawn-screen', x, 1.6, .8, .6, 3.2, 3.4, wall);
   // Hollow well mass offset from the capture center so the objective remains walkable.
   for (const side of [-1, 1]) {
-    w.box('blockout-well', 3 + side, .5, -9, .3, 1, 2.3, cover);
-    w.box('blockout-well', 3, .5, -9 + side, 1.7, 1, .3, cover);
+    w.box('blockout-well', 3 + side, .5, -9, .3, 1, 2.3, w.material('art-stone','#b3a58c'));
+    w.box('blockout-well', 3, .5, -9 + side, 1.7, 1, .3, w.material('art-stone','#b3a58c'));
   }
 }

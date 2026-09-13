@@ -2,6 +2,9 @@ import './ui/style.css';
 import { Game } from './game/Game';
 const game = new Game(document.querySelector<HTMLCanvasElement>('#game')!);
 if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
+if(import.meta.env.DEV)import('./dev/SightCalibrationDebug').then(({SightCalibrationDebug})=>{
+ if(!game.scene.isDisposed)(window as unknown as {__sightDebug:InstanceType<typeof SightCalibrationDebug>}).__sightDebug=new SightCalibrationDebug(game);
+});
 if(import.meta.hot)import.meta.hot.dispose(()=>game.dispose());
 if(import.meta.env.DEV && new URLSearchParams(location.search).has('mapcheck'))import('./dev/MapValidation').then(m=>m.mapValidation(game));
 

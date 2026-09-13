@@ -2,9 +2,12 @@ import {AIWorkScheduler} from '../ai/AIWorkScheduler';
 import {parseQuality,qualityScaling,type Quality} from '../config/quality';
 import { Color3, Color4, DirectionalLight, Engine, HemisphericLight, PointLight, Scene, Vector3 } from '@babylonjs/core';
 import { applyMapMaterials } from '../map/MapMaterials';
+import {VillageMaterialLibrary} from '../map/VillageMaterialLibrary';
+import {addVillageShadows} from '../map/VillageLighting';
 import { World } from '../map/World';
 import { Player } from '../player/Player';
 import { Weapon } from '../weapons/Weapon';
+import {HanyangRifleAssets} from '../weapons/HanyangRifle';
 import {PlayerPressureDirector} from '../ai/PlayerPressureDirector';
 import { Bot } from '../ai/Bot';
 import { Combat } from './Combat';
@@ -23,6 +26,8 @@ import { ScoreSystem } from './ScoreSystem';
 import { StrategicDirector } from '../ai/StrategicDirector';
 import { FootstepTracker } from '../audio/Footsteps';
 export class Game {
+  villageMaterials:VillageMaterialLibrary;
+  weaponAssetsReady:Promise<void>;weaponAssetState:'loading'|'ready'|'error'='loading';
   engine: Engine; scene: Scene; world: World; player: Player; weapon: Weapon; time = 0; started = false;
   bots: Bot[] = []; actors: Actor[] = []; combat: Combat; hud: HUD;
   pressure=new PlayerPressureDirector();capture = new CaptureSystem(); match = new Match(); paused = true; hudClock = 0;
@@ -41,13 +46,19 @@ export class Game {
     this.engine = new Engine(canvas, true); this.engine.setHardwareScalingLevel(qualityScaling(this.quality,window.devicePixelRatio,CONFIG.graphics.maxPixelRatio)); this.scene = new Scene(this.engine); this.scene.clearColor = Color4.FromHexString('#c5c7bbff');this.scene.fogMode=Scene.FOGMODE_LINEAR;this.scene.fogStart=CONFIG.graphics.fogStart;this.scene.fogEnd=CONFIG.graphics.fogEnd;this.scene.fogColor=Color3.FromHexString('#c5c7bb');
     this.ambient = new HemisphericLight('sky', new Vector3(.3, 1, .2), this.scene); this.ambient.intensity = .8; this.ambient.groundColor = Color3.FromHexString('#71604b'); this.sun=new DirectionalLight('sun', new Vector3(-.5, -1, -.3), this.scene);this.sun.intensity=.9;
     this.lamp=new PointLight('nearest-oil-lamp',new Vector3(0,-2,-29),this.scene);this.lamp.diffuse=Color3.FromHexString('#f3b866');this.lamp.range=15;this.lamp.intensity=0;
-    this.world = new World(this.scene); this.world.buildVillage(); applyMapMaterials(this.world);
+    this.world = new World(this.scene); this.world.buildVillage(); this.villageMaterials=applyMapMaterials(this.world);
     const staticMapMeshes = [...this.scene.meshes];
+    addVillageShadows(this.sun,staticMapMeshes);
     this.player = new Player(this.scene, canvas, this.world); this.weapon = new Weapon(this.scene, this.player, this.world);
     for (let i = 1; i <= CONFIG.ai.cnCount + CONFIG.ai.jpCount; i++) this.bots.push(new Bot(i, i <= CONFIG.ai.cnCount ? 'cn' : 'jp', this.world));
+    this.villageMaterials.apply();
     this.actors = [this.player, ...this.bots]; this.combat = new Combat(this.world, this.actors);
     this.spawns=new SpawnSystem(this.world,this.capture,this.actors);this.scores=new ScoreSystem(this.actors);this.hud = new HUD(this);
     this.captureVisuals=new CaptureVisuals(this.world,this.capture);this.effects=new Effects(this.world);
+    this.weaponAssetsReady=HanyangRifleAssets.load(this.scene).then(assets=>{
+      if(this.scene.isDisposed)return;
+      this.weapon.installRifle(assets);for(const bot of this.bots)bot.model.installRifle(assets);this.weaponAssetState='ready';
+    }).catch(error=>{if(!this.scene.isDisposed){this.weaponAssetState='error';console.error('汉阳造模型加载失败，保留备用武器',error);this.hud.notify('武器模型加载失败，请刷新重试');}});
     this.mapOverview = new MapOverview(this, staticMapMeshes);
     this.engine.maxFPS=CONFIG.graphics.maxFPS;if(import.meta.env.DEV)this.diagnostics=new Diagnostics(this);
     this.combat.onDeath = (victim, attacker, head) => {
@@ -72,7 +83,7 @@ export class Game {
     this.capture.onCapture = (point, owner) => {this.scores.capture(point,owner);this.hud.notify(`${point.id} ${point.name} · ${owner === 'cn' ? '中国方占领' : owner === 'jp' ? '日军占领' : '已中立'}`);this.bots.forEach(b=>b.requestReplan(this.time));};
     this.player.onLock = locked => { if (this.mapOverview.active) return;if(this.started&&!this.player.alive&&!this.match.winner){this.paused=false;this.audio.pause(false);this.hud.menu.hidden=true;return;} this.paused = !locked; this.audio.pause(!locked); if (locked) this.hud.menu.hidden = true; else this.hud.showMenu(); };
     this.player.update(0); this.bots.forEach(b => b.model.root.position.copyFrom(b.position));
-    this.engine.runRenderLoop(() => { const dt = Math.min(.05, this.engine.getDeltaTime() / 1000); if (this.started && !this.paused && !this.match.winner) this.step(dt); this.hudClock += dt; if (this.hudClock > .08) { this.hud.update(); this.hudClock = 0; } this.scene.render();this.diagnostics?.update(); });
+    this.engine.runRenderLoop(() => { const dt = Math.min(.05, this.engine.getDeltaTime() / 1000); if (this.started && !this.paused && !this.match.winner) this.step(dt); this.hudClock += dt; if (this.hudClock > .08) { this.hud.update(); this.hudClock = 0; } this.hud.updateHurt();this.scene.render();this.diagnostics?.update(); });
     window.addEventListener('resize', () => this.engine.resize(),{signal:this.events.signal});
   }
   start() { if (this.mapOverview.active) return; if (!this.started || this.match.winner) this.reset(); this.started = true; void this.audio.start().catch(()=>{}); void this.player.lock(); }
@@ -107,7 +118,7 @@ export class Game {
     this.scene.fogColor.set(.773-.58*blend,.78-.59*blend,.733-.57*blend);
     if(blend>.01&&this.world.lamps.length){let nearest=this.world.lamps[0];for(const p of this.world.lamps)if(Vector3.DistanceSquared(p,this.player.position)<Vector3.DistanceSquared(nearest,this.player.position))nearest=p;this.lamp.position.copyFrom(nearest);}
     this.audio.update(dt,this.player.camera.position,this.player.yaw,blend);
-    if(this.footsteps.advance(this.player.moveSpeed*dt,this.player.alive&&this.player.velocityY===0,this.player.crouching?'crouch':this.player.sprinting?'sprint':'walk')){
+    if(this.footsteps.advance(this.player.moveSpeed*dt,this.player.grounded,this.player.crouching?'crouch':this.player.sprinting?'sprint':'walk')){
       this.audio.play('step-'+this.world.footstepAt(this.player.position),undefined,undefined,0,blend);
     }
     if (this.match.winner) { this.paused = true; document.exitPointerLock(); this.hud.win(); }

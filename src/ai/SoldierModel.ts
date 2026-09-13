@@ -2,7 +2,15 @@ import {boltPose} from '../weapons/BoltTimeline';
 import { Mesh, MeshBuilder, Scene, TransformNode } from '@babylonjs/core';
 import type { Team } from '../config/gameConfig';
 import { World } from '../map/World';
+import type {HanyangRifleAssets,HanyangRifleInstance} from '../weapons/HanyangRifle';
 export class SoldierModel {
+  visual?:HanyangRifleInstance;
+  installRifle(assets:HanyangRifleAssets){
+    if(this.visual)return;
+    const fallback=this.gun.getChildren();this.visual=assets.attach(this.gun);this.bolt=this.visual.bolt;
+    for(const node of fallback)node.dispose();
+    this.meshes=this.root.getChildMeshes() as Mesh[];
+  }
   bolt:TransformNode;root: TransformNode; torso: TransformNode; leftLeg!: TransformNode; rightLeg!: TransformNode; leftArm!: TransformNode; rightArm!: TransformNode; gun: TransformNode; blade: TransformNode; meshes: Mesh[] = [];
   constructor(scene: Scene, world: World, team: Team, variant: number) {
     this.root = new TransformNode('soldier-' + team, scene); this.torso = new TransformNode('upper-body', scene); this.torso.parent = this.root;
@@ -36,7 +44,7 @@ export class SoldierModel {
     this.meshes = this.root.getChildMeshes() as Mesh[];
   }
   update(time: number, moving: boolean, engaging: boolean, melee: boolean, shot: number, deadAge: number,boltPhase=0,reloading=false) {
-    const pose=boltPose(boltPhase);this.bolt.position.z=.2-pose.back*.1;this.bolt.rotation.z=pose.lift;this.gun.rotation.z=pose.tilt*.13;this.gun.rotation.x=reloading?.35:0;
+    const pose=boltPose(boltPhase);if(this.visual)this.visual.setBolt(reloading?1:pose.lift,reloading?1:pose.back);else{this.bolt.position.z=.2-pose.back*.1;this.bolt.rotation.z=pose.lift;}this.gun.rotation.z=pose.tilt*.13;this.gun.rotation.x=reloading?.35:0;
     const stride = moving ? Math.sin(time * 10) * .65 : 0;
     this.leftLeg.rotation.x = stride; this.rightLeg.rotation.x = -stride;
     this.leftArm.rotation.x = engaging ? -1.3 : -.7 - stride * .3; this.rightArm.rotation.x = melee ? -1.3 + Math.sin(shot * Math.PI) * 1.8 : -1.25;

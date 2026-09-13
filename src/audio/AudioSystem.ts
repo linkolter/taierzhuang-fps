@@ -57,8 +57,11 @@ export class ProceduralAudioSystem {
   const layers=sounds[name]??sounds[name==='hit'?'impact-body':name==='step'?'step-earth':name==='bolt'?'bolt-lock':'impact-earth'];
   while(this.voices.size>=CONFIG.stability.audioVoices)this.voices.values().next().value?.();
   const nodes:AudioNode[]=[],sources:(AudioBufferSourceNode|OscillatorNode)[]=[];
-  const mix=Math.max(Number(sourceTunnel),this.underground),bus=c.createGain(),dry=c.createGain(),wet=c.createGain();dry.gain.value=1-mix;wet.gain.value=mix;
-  bus.connect(dry).connect(this.surfaceBus!);bus.connect(wet).connect(this.tunnelBus!);nodes.push(bus,dry,wet);
+  const mix=Math.max(Number(sourceTunnel),this.underground);
+  // Endpoints have exactly one audible bus. Keep crossfade nodes only for a real blend.
+  let bus:AudioNode=mix===0?this.surfaceBus!:this.tunnelBus!;
+  if(mix!==0&&mix!==1){const blend=c.createGain(),dry=c.createGain(),wet=c.createGain();dry.gain.value=1-mix;wet.gain.value=mix;
+    blend.connect(dry).connect(this.surfaceBus!);blend.connect(wet).connect(this.tunnelBus!);nodes.push(blend,dry,wet);bus=blend;}
   let output:AudioNode=bus;
   if(position){const p=c.createPanner();p.panningModel='equalpower';p.distanceModel='inverse';p.refDistance=5;p.rolloffFactor=1.25;p.maxDistance=220;p.positionX.value=position.x;p.positionY.value=position.y;p.positionZ.value=-position.z;p.connect(bus);nodes.push(p);output=p;}
   let pending=layers.length,ended=false;

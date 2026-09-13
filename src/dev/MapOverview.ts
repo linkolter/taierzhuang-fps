@@ -57,7 +57,7 @@ export class MapOverview {
     this.camera.inputs.clear();
     this.overlay.id = 'map-overview';
     this.overlay.hidden = true;
-    this.overlay.innerHTML = '<div class="map-overview-help">COMBAT MAP V3 · 白盒待验收　|　F8 返回第一人称</div><div class="map-overview-north">↑ N 北</div><div class="map-overview-legend">高地 +2～+5 m　 /　 村心 0 m　 /　 南沟 −1～−2 m　 ·　 对局暂停</div>';
+    this.overlay.innerHTML = '<div class="map-overview-help">COMBAT MAP V3 · 鲁南村镇　|　F8 返回第一人称</div><div class="map-overview-north">↑ N 北</div><div class="map-overview-legend">高地 +2～+5 m　 /　 村心 0 m　 /　 南沟 −1～−2 m　 ·　 对局暂停</div>';
     for (const point of game.capture.points) this.addMarker(`${point.id} · ${point.name}`, point.x, point.z, 'point');
     this.addMarker('中国方出生区', CONFIG.player.spawnX, 0, 'cn');
     this.addMarker('日军出生区', MAP.spawnX, 0, 'jp');

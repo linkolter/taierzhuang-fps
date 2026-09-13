@@ -6,6 +6,7 @@ import {Bot} from '../src/ai/Bot';
 import {Combat} from '../src/game/Combat';
 import {PlayerPressureDirector} from '../src/ai/PlayerPressureDirector';
 import {BOLT_EVENTS,boltPose} from '../src/weapons/BoltTimeline';
+import {AIWorkScheduler} from '../src/ai/AIWorkScheduler';
 import type {Actor} from '../src/game/types';
 const engine=new NullEngine(),scene=new Scene(engine),world=new World(scene);world.buildVillage();
 after(()=>{scene.dispose();engine.dispose();});
@@ -44,4 +45,17 @@ test('local combat uses existing connections without launching strategic route s
 });
 test('bolt phases lift before pull, eject at full rear travel, then push and lock',()=>{
  assert.equal(BOLT_EVENTS.length,5);assert.equal(boltPose(0).lift,0);assert.ok(boltPose(.24).lift>.99);assert.equal(boltPose(.24).back,0);assert.ok(boltPose(.43).back>.99);assert.equal(boltPose(.83).back,0);assert.deepEqual(boltPose(1),{lift:0,back:0,tilt:0});
+});
+test('deferred perception keeps movement and protection timers running every frame',()=>{
+ const b=bot(15),work=new AIWorkScheduler();b.protection=1;b.path=[new Vector3(-73,0,0)];
+ work.beginFrame();for(const id of [101,102,103])work.allow('perception',id);
+ const x=b.position.x;let rays=0;b.update(.01,1,[b],[],()=>{rays++;return true;},work);
+ assert.ok(b.position.x>x);assert.equal(b.protection,.99);assert.ok(b.think<=0);assert.equal(rays,0);
+});
+test('deferred fire does not consume ammunition; next grant still performs visibility check',()=>{
+ const b=bot(15),enemy=actor(0,-70,0),work=new AIWorkScheduler();b.target=enemy;b.think=100;b.combatMove=()=>{};
+ let shots=0,rays=0;b.onFire=()=>shots++;const visible=()=>{rays++;return true;};
+ work.beginFrame();for(const id of [101,102,103])work.allow('fire',id);
+ b.update(.01,1,[b,enemy],[],visible,work);assert.equal(shots,0);assert.equal(rays,0);assert.equal(b.ammo,5);
+ work.beginFrame();b.update(.01,1.01,[b,enemy],[],visible,work);assert.equal(shots,1);assert.equal(rays,1);assert.equal(b.ammo,4);
 });

@@ -1,3 +1,4 @@
+import type {AIWorkScheduler} from './AIWorkScheduler';
 import {CombatBehavior} from './CombatBehavior';
 import type {StrategicRole} from './StrategicDirector';
 import {inBase} from '../game/SpawnSystem';
@@ -56,7 +57,7 @@ export class Bot implements Actor {
     this.planPriority=2;this.pathIndex = 0; this.replanAt = this.currentTime + 12 + this.id % 5; this.state = 'MoveToObjective';
   }
   score(o: Objective) { const danger=this.roster.filter(a=>a.alive&&a.team!==this.team&&Math.hypot(a.position.x-o.x,a.position.z-o.z)<10).length;return Math.hypot(o.x - this.position.x, o.z - this.position.z) + (o.owner === this.team ? danger>0?-35:65 : o.owner ? -10 : 0) + ((this.id * (o.id.charCodeAt(0) + 3)) % 23)+(this.route==='tunnel'&&o.id===(this.team==='cn'?'C':'A')?-32:0); }
-  update(dt: number, time: number, actors: Actor[], objectives: Objective[], visible: (a: Actor, b: Actor) => boolean) {
+  update(dt: number, time: number, actors: Actor[], objectives: Objective[], visible: (a: Actor, b: Actor) => boolean, work?:AIWorkScheduler) {
     this.currentTime=time;
     if(!this.world.routePlanner.has(this.planKey)&&this.routeAnchor&&Vector3.Distance(this.position,this.routeAnchor)<CONFIG.tactics.anchorRadius){this.routeAnchor=null;this.anchorVisited=true;}
     this.roster=actors;this.moving = false;this.crouching=false; this.shot = Math.max(0, this.shot - dt * 2.8); this.protection = Math.max(0, this.protection - dt);
@@ -65,7 +66,7 @@ export class Bot implements Actor {
     if(this.dirty&&time>=this.replanAt)this.queuePlan(objectives);
     if(this.boltUntil>0){const phase=1-(this.boltUntil-time)/CONFIG.rifle.cycle;while(this.boltEvent<BOLT_EVENTS.length&&phase>=BOLT_EVENTS[this.boltEvent].at)this.onSound(BOLT_EVENTS[this.boltEvent++].sound,this.position);if(time>=this.boltUntil)this.boltUntil=0;}
     this.think -= dt;
-    if (this.think <= 0) {
+    if (this.think <= 0 && (work?.allow('perception',this.id)??true)) {
 
       const previousTarget=this.target;
       this.think = CONFIG.ai.thinkInterval + this.id * .003; let closest: number = Infinity; this.target = null;
@@ -78,14 +79,14 @@ export class Bot implements Actor {
     if (this.target?.alive) {
       const dx=this.target.position.x-this.position.x,dz=this.target.position.z-this.position.z,distance=Vector3.Distance(this.target.position,this.position);this.model.root.rotation.y=Math.atan2(dx,dz);
       const melee=distance<CONFIG.ai.meleeDistance&&(this.ammo===0||this.health<50||distance<1.8);this.state=melee?'Melee':'EngageEnemy';
-      if(!melee)this.combatMove(dt,time,this.target);else this.releaseCover();
+      if(!melee)this.combatMove(dt,time,this.target,work);else this.releaseCover();
       if(this.ammo===0&&!this.emptySince)this.emptySince=time;
       if(this.ammo===0&&this.reloadUntil===0&&!melee&&time>=this.boltUntil){
         const safe=this.cover?this.coverArrived>0&&Vector3.DistanceSquared(this.position,this.cover.position)<.18:time-this.emptySince>2&&!this.moving;
         if(safe){this.reloadEvent=0;this.reloadUntil=time+CONFIG.rifle.reload;this.onSound('reload',this.position);}
       }
       const ready=time>=this.nextShot&&time>=this.reactionUntil&&time>=this.boltUntil&&(melee||this.ammo>0&&this.reloadUntil===0);
-      if(ready&&!this.crouching&&(!this.moving||melee)&&time>=this.fireCheckAt){
+      if(ready&&!this.crouching&&(!this.moving||melee)&&time>=this.fireCheckAt&&(work?.allow('fire',this.id)??true)){
         this.fireCheckAt=time+.15;
         if(visible(this,this.target)){
           if(melee||this.canFire(this,this.target)){
@@ -115,7 +116,7 @@ export class Bot implements Actor {
   followObjective(dt:number,speed:number=CONFIG.ai.speed){const goal=this.path[this.pathIndex];if(!goal||this.world.routePlanner.has(this.planKey))return;this.walkTo(goal,dt,this.world.undergroundAt(this.position.x,this.position.y,this.position.z)?CONFIG.ai.tunnelSpeed:speed);if(Vector3.Distance(this.position,goal)<(this.world.undergroundAt(this.position.x,this.position.y,this.position.z)?.22:.38))this.pathIndex++;}
   syncModel(time:number){this.position.y=this.world.floorAt(this.position.x,this.position.z,this.position.y);this.model.root.position.copyFrom(this.position);this.model.root.scaling.y=this.crouching?.72:1;this.model.update(time+this.id,this.moving,!!this.target,this.state==='Melee',this.shot,-1,this.boltUntil>0?1-(this.boltUntil-time)/CONFIG.rifle.cycle:0,this.reloadUntil>0);}
   damaged(time:number){this.damagedAt=time;this.reactionUntil=Math.max(this.reactionUntil,time+.2+Math.random()*.2);}
-  combatMove(dt:number,time:number,enemy:Actor){this.combat.update(this,dt,time,enemy);}
+  combatMove(dt:number,time:number,enemy:Actor,work?:AIWorkScheduler){this.combat.update(this,dt,time,enemy,work);}
   walkTo(goal: Vector3, dt: number, speed: number) { if(!this.target&&this.world.routePlanner.has(this.planKey))return;const dx=goal.x-this.position.x,dz=goal.z-this.position.z,length=Math.hypot(dx,dz);if(length<.1)return;const x=this.position.x,z=this.position.z;this.world.move(this.position,dx/length*Math.min(length,speed*dt),dz/length*Math.min(length,speed*dt));const moved=Math.hypot(this.position.x-x,this.position.z-z);this.moving=moved>.00001;this.stepDistance+=moved;if(this.stepDistance>1.8){this.stepDistance=0;this.onSound('step-'+this.world.footstepAt(this.position),this.position);}if(!this.target)this.model.root.rotation.y=Math.atan2(dx,dz);this.stuck=this.moving?0:this.stuck+dt;if(this.stuck>1.5){this.recoveries++;this.releaseCover();this.path=[];this.pathIndex=0;this.requestReplan(this.currentTime,0);this.stuck=0;} }
 }
 

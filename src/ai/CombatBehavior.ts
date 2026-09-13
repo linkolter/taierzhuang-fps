@@ -1,3 +1,4 @@
+import type {AIWorkScheduler} from './AIWorkScheduler';
 import {Vector3} from '@babylonjs/core';
 import type {Bot} from './Bot';
 import type {Actor} from '../game/types';
@@ -33,10 +34,10 @@ export class CombatBehavior {
    bot.cover=p;p.reservedBy=bot.id;bot.coverSince=time;bot.coverArrived=0;this.path=path;this.pathIndex=0;this.goal=null;return;
   }
  }
- update(bot:Bot,dt:number,time:number,enemy:Actor){
+ update(bot:Bot,dt:number,time:number,enemy:Actor,work?:AIWorkScheduler){
   if(this.relocate){this.relocate=false;bot.releaseCover();this.goal=null;this.path=[];this.pauseUntil=time;this.nextCoverAt=time+1.5;}
   if(bot.reloadUntil>0&&!bot.cover){this.goal=null;bot.crouching=true;bot.state='TakeCover';return;}
-  if(time>=this.decisionAt){this.decisionAt=time+.4;this.decisions++;
+  if(time>=this.decisionAt&&(work?.allow('decision',bot.id)??true)){this.decisionAt=time+.4;this.decisions++;
    if(time>=this.tacticUntil&&bot.reloadUntil===0&&bot.ammo>0){bot.releaseCover();this.path=[];this.goal=null;this.tactic=(['HOLD','PUSH','FLANK'] as const)[(bot.id+Math.floor(time/7))%3];this.tacticUntil=time+6+Math.random()*2;}
    if(!bot.cover&&!bot.world.undergroundAt(bot.position.x,bot.position.y,bot.position.z))this.choose(bot,enemy,time);
    if(!bot.cover&&time>=this.pauseUntil&&!this.goal){

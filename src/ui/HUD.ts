@@ -12,13 +12,14 @@ export class HUD {
     this.root.innerHTML = `<div id="top"><div class="team cn"><span>中国方</span><strong id="cn-tickets">100</strong><i><b id="cn-bar"></b></i></div><div id="objectives"></div><div class="team jp"><span>日军方</span><strong id="jp-tickets">100</strong><i><b id="jp-bar"></b></i></div></div>
       <div id="clock"></div><div id="crosshair"><i></i><i></i><i></i><i></i></div><div id="hitmarker">×</div><div id="hurt"></div><div id="capture"></div><div id="notice"></div><div id="killfeed"></div><div id="location"></div>
       <div id="vitals"><span>中国方 · 步兵</span><div><strong id="health">100</strong><small>生命</small></div><i><b id="health-bar"></b></i></div>
-      <div id="weapon"><span id="weapon-name">三八式步枪</span><div><strong id="ammo">5</strong><small id="ammo-max"> / 5</small></div><span id="weapon-state">栓动 · 单发</span></div>
+      <div id="weapon"><span id="weapon-name">汉阳造步枪</span><div><strong id="ammo">5</strong><small id="ammo-max"> / 5</small></div><span id="weapon-state">栓动 · 单发</span></div>
       <div id="controls">WASD 移动　Shift 奔跑　C 蹲下　Space 跳跃　右键 瞄准　R 装填　1 / 2 武器　Esc 暂停</div>
       <div id="world-objectives"></div><div id="scoreboard" hidden></div>
       <div id="death" hidden><small>你已阵亡</small><h2>选择增援位置</h2><p id="death-cause"></p><p id="death-score"></p><div id="spawn-map" aria-label="战术部署地图"><span class="map-north">北 ↑</span><div class="map-lanes"></div><div id="spawn-options"></div></div><p id="spawn-status"></p><button id="deploy">部署</button></div>
-      <div id="menu"><div class="menu-inner"><div class="eyebrow">1938 鲁南村镇 · COMBAT MAP V3 · BLOCKOUT</div><h1>烽火<span>乡关</span></h1><p class="subtitle">守住村庄，争夺每一寸土地。</p><div class="brief"><span>中国方 <b>你 + 7 AI</b></span><span>日军方 <b>8 AI</b></span><span>作战范围 <b>180 × 90 m</b></span></div><p id="menu-copy">争夺 A / B / C，控制多数据点消耗敌方兵力。<br>A 西北祠堂 / B 村心水井 / C 东北粮仓。<br>当前为白盒验收版本，按 F8 查看全图。</p><button id="start">开始作战 <span>→</span></button><p class="menu-help">点击后全屏并锁定鼠标 · Esc 暂停并释放鼠标<br>C 下蹲；全屏按键捕获成功后也可用 Ctrl<br>左键射击 / 挥砍　右键瞄准　R 换弹　1 步枪　2 大刀</p><div class="footnote">原创程序化场景与角色 · 单人离线 8 v 8</div></div></div>`;
+      <div id="menu"><div class="menu-inner"><div class="eyebrow">1938 鲁南村镇 · COMBAT MAP V3</div><h1>烽火<span>乡关</span></h1><p class="subtitle">守住村庄，争夺每一寸土地。</p><div class="brief"><span>中国方 <b>你 + 7 AI</b></span><span>日军方 <b>8 AI</b></span><span>作战范围 <b>180 × 90 m</b></span></div><p id="menu-copy">争夺 A / B / C，控制多数据点消耗敌方兵力。<br>A 西北祠堂 / B 村心水井 / C 东北粮仓。<br>沿村巷、高地与地道作战，按 F8 查看全图。</p><label class="quality-setting">画面质量 <select id="quality" aria-label="画面质量"><option>LOW</option><option>MEDIUM</option><option>HIGH</option></select></label><button id="start">开始作战 <span>→</span></button><p class="menu-help">点击后全屏并锁定鼠标 · Esc 暂停并释放鼠标<br>C 下蹲；全屏按键捕获成功后也可用 Ctrl<br>左键射击 / 挥砍　右键瞄准　R 换弹　1 步枪　2 大刀</p><div class="footnote">单人离线 8 v 8 · 汉阳造步枪</div></div></div>`;
     this.menu = this.root.querySelector('#menu')!; this.startButton = this.root.querySelector('#start')!;
     this.startButton.addEventListener('click',this.clickStart);
+    const quality=this.el('quality') as HTMLSelectElement;quality.value=game.quality;quality.addEventListener('change',()=>game.setQuality(quality.value),{signal:this.events.signal});
     this.el('deploy').addEventListener('click',()=>this.game.deploy(),{signal:this.events.signal});
     this.el('spawn-options').addEventListener('click',e=>{const button=(e.target as HTMLElement).closest<HTMLButtonElement>('button[data-spawn]');if(button&&!button.disabled)this.game.selectedSpawn=button.dataset.spawn!;},{signal:this.events.signal});
     document.addEventListener('keydown',e=>{if(e.code==='Tab'&&this.game.started){e.preventDefault();this.scoreboard=true;}},{signal:this.events.signal});
@@ -31,6 +32,11 @@ export class HUD {
   notify(text: string, time = 3) { this.message = text; this.messageUntil = this.game.time + time; }
   hit(head: boolean) { this.hitUntil = this.game.time + .18; this.el('hitmarker').style.color = head ? '#d9ba72' : '#fff'; }
   hurt() { this.hurtUntil = this.game.time + .4; }
+  updateHurt(){
+    const p=this.game.player,base=p.health<35&&p.alive?.25:0;
+    const remaining=Math.max(0,Math.min(1,(this.hurtUntil-this.game.time)/.4));
+    this.el('hurt').style.opacity=String(base+(.8-base)*remaining);
+  }
   showMenu() { if (!this.game.match.winner) { this.menu.hidden = false; if (this.game.started) { this.el('menu-copy').textContent = '作战已暂停。点击继续返回战场。'; this.startButton.innerHTML = '继续作战 <span>→</span>'; } } }
   win() { const g = this.game,r=g.scores.row(0); this.menu.hidden = false; this.root.querySelector('h1')!.textContent = g.match.winner === 'cn' ? '胜利 · 坚守乡关' : '失败 · 来日再战'; this.el('menu-copy').innerHTML = `${g.match.reason}<br>中国 ${g.match.tickets.cn} : ${g.match.tickets.jp} 日军 · 用时 ${this.formatTime(g.match.elapsed)}<br>K/D ${r.kills}/${r.deaths} · 积分 ${r.score}<br>占领 ${r.captures} · 防守 ${r.defenses} · 助攻 ${r.assists}`; this.startButton.innerHTML = '再来一局 <span>↻</span>'; }
   formatTime(t: number) { return `${Math.floor(t / 60).toString().padStart(2,'0')}:${Math.floor(t % 60).toString().padStart(2,'0')}`; }
@@ -42,10 +48,10 @@ export class HUD {
     this.html('controls',`WASD 移动　Shift 奔跑　${p.ctrlCrouchAvailable ? 'Ctrl / C' : 'C'} 蹲下　Space 跳跃　右键 瞄准　R 装填　1 / 2 武器　Tab 比分板　Esc 暂停`);
     this.el('health').textContent = String(p.health); this.el('health-bar').style.width = p.health + '%';
     this.el('ammo').textContent = w.slot === 1 ? String(w.ammo) : '刀'; this.el('ammo-max').textContent = w.slot === 1 ? ' / 5' : '';
-    this.el('weapon-name').textContent = w.slot === 1 ? '三八式步枪' : '中国大刀';
-    this.el('weapon-state').textContent = w.reloadTime > 0 ? `装填中 ${w.reloadTime.toFixed(1)}s` : w.cooldown > 0 ? w.slot === 1 ? '拉栓中' : '收刀' : w.slot === 1 ? w.ammo === 0 ? '按 R 装填' : '栓动 · 单发' : '近战 · 2 米';
+    this.el('weapon-name').textContent = w.slot === 1 ? '汉阳造步枪' : '中国大刀';
+    this.el('weapon-state').textContent = w.switching ? '切换武器' : w.reloadTime > 0 ? `装填中 ${w.reloadTime.toFixed(1)}s` : w.cooldown > 0 ? w.slot === 1 ? '拉栓中' : '收刀' : w.slot === 1 ? w.ammo === 0 ? '按 R 装填' : '栓动 · 单发' : '近战 · 2 米';
     this.el('crosshair').hidden = p.ads || !p.alive || !g.started; this.el('hitmarker').hidden = g.time > this.hitUntil;
-    this.el('hurt').style.opacity = g.time < this.hurtUntil ? '.8' : p.health < 35 && p.alive ? '.25' : '0';
+    this.updateHurt();
     this.el('notice').textContent = g.time < this.messageUntil ? this.message : '';
     const cap = g.capture.points.find(o => Math.hypot(p.position.x-o.x,p.position.z-o.z) <= CONFIG.match.captureRadius && Math.abs(p.position.y-(o.y??0)) < 1.1);
     this.el('capture').innerHTML = cap && p.alive ? `<b>${cap.id} · ${cap.name}</b><span>${cap.contested ? '交战中 · 占领暂停' : cap.owner === p.team && cap.progress === 1 ? '我方控制' : '占领中'}　${Math.round(Math.abs(cap.progress)*100)}%</span><i><b style="width:${Math.abs(cap.progress)*100}%;background:${cap.progress >=0 ? CONFIG.colors.cn : CONFIG.colors.jp}"></b></i>` : '';

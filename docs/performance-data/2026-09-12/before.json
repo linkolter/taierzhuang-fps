@@ -1,0 +1,1057 @@
+{
+  "running": false,
+  "label": "before",
+  "quality": "MEDIUM",
+  "seconds": 120,
+  "wallSeconds": 122.119,
+  "browser": "153.0.8010.36",
+  "hardware": "12th Gen Intel(R) Core(TM) i5-12600KF",
+  "initial": {
+    "stats": {
+      "wallSeconds": 18,
+      "matchSeconds": 15,
+      "meshes": 290,
+      "materials": 32,
+      "textures": 7,
+      "particles": 0,
+      "ai": 15,
+      "deadAI": 0,
+      "activeEffects": 0,
+      "effectPool": 28,
+      "shellPool": 24,
+      "activeShells": 0,
+      "lights": 4,
+      "smokePool": 8,
+      "pressureShooters": 0,
+      "microDecisions": 0,
+      "muzzleBlocked": 0,
+      "projectiles": 0,
+      "decals": 0,
+      "audioVoices": 1,
+      "transformNodes": 139,
+      "pathNodes": 2263,
+      "heapMB": 59.1,
+      "fps": 55.4,
+      "restarts": 2,
+      "errors": 0
+    },
+    "audio": {
+      "active": 16,
+      "peak": 65,
+      "created": 3086,
+      "types": {
+        "createDynamicsCompressor": 1,
+        "createGain": 8,
+        "createBiquadFilter": 3,
+        "createConvolver": 1,
+        "createBufferSource": 2,
+        "createPanner": 1,
+        "createOscillator": 0
+      }
+    },
+    "heap": 62020589,
+    "routeCache": 31,
+    "routeScratch": 1,
+    "queue": 0,
+    "quality": null,
+    "render": [
+      1920,
+      1080
+    ],
+    "scheduler": null
+  },
+  "final": {
+    "stats": {
+      "wallSeconds": 140,
+      "matchSeconds": 135,
+      "meshes": 290,
+      "materials": 32,
+      "textures": 7,
+      "particles": 0,
+      "ai": 15,
+      "deadAI": 2,
+      "activeEffects": 0,
+      "effectPool": 28,
+      "shellPool": 24,
+      "activeShells": 5,
+      "lights": 4,
+      "smokePool": 8,
+      "pressureShooters": 0,
+      "microDecisions": 899,
+      "muzzleBlocked": 116,
+      "projectiles": 0,
+      "decals": 0,
+      "audioVoices": 0,
+      "transformNodes": 139,
+      "pathNodes": 1661,
+      "heapMB": 67.9,
+      "fps": 57.8,
+      "restarts": 2,
+      "errors": 0
+    },
+    "audio": {
+      "active": 9,
+      "peak": 99,
+      "created": 27249,
+      "types": {
+        "createDynamicsCompressor": 1,
+        "createGain": 4,
+        "createBiquadFilter": 2,
+        "createConvolver": 1,
+        "createBufferSource": 1,
+        "createPanner": 0,
+        "createOscillator": 0
+      }
+    },
+    "heap": 71171901,
+    "routeCache": 212,
+    "routeScratch": 1,
+    "queue": 0,
+    "quality": null,
+    "render": [
+      1920,
+      1080
+    ],
+    "scheduler": null
+  },
+  "samples": [
+    {
+      "seconds": 30.00469999998808,
+      "frames": 1801,
+      "fps": 60.02392958438896,
+      "cpu": {
+        "mean": 1.3833425875374636,
+        "p95": 1.9000000357627869,
+        "p99": 2.800000011920929,
+        "max": 11.900000035762787
+      },
+      "frame": {
+        "mean": 16.655024986112203,
+        "p95": 16.80000001192093,
+        "p99": 17,
+        "max": 20.900000035762787
+      },
+      "metrics": {
+        "Collision / terrain": {
+          "selfMsPerFrame": 0.06718489665047848,
+          "inclusiveMsPerFrame": 0.10533037068511565,
+          "callsPerSecond": 7121.550957019563,
+          "maxCallMs": 0.30000001192092896
+        },
+        "Shell casings": {
+          "selfMsPerFrame": 0.002609661325754423,
+          "inclusiveMsPerFrame": 0.005663520226804234,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 0.5
+        },
+        "Particles / smoke": {
+          "selfMsPerFrame": 0.0014436424341154124,
+          "inclusiveMsPerFrame": 0.0014436424341154124,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 0.19999998807907104
+        },
+        "Strategic director": {
+          "selfMsPerFrame": 0.0011104941368103027,
+          "inclusiveMsPerFrame": 0.0011104941368103027,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 0.19999998807907104
+        },
+        "AI model update": {
+          "selfMsPerFrame": 0.015324819822697955,
+          "inclusiveMsPerFrame": 0.01832315416749089,
+          "callsPerSecond": 849.6668855216059,
+          "maxCallMs": 0.2999999523162842
+        },
+        "AI other": {
+          "selfMsPerFrame": 0.05696835126034887,
+          "inclusiveMsPerFrame": 0.24664075486465403,
+          "callsPerSecond": 900.3589437658344,
+          "maxCallMs": 2.599999964237213
+        },
+        "Route planning": {
+          "selfMsPerFrame": 0.012548584232457409,
+          "inclusiveMsPerFrame": 0.015102720803383124,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 1
+        },
+        "Score presence": {
+          "selfMsPerFrame": 0.004775124976927542,
+          "inclusiveMsPerFrame": 0.004775124976927542,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 0.30000001192092896
+        },
+        "Particles / world FX": {
+          "selfMsPerFrame": 0.001554691811391607,
+          "inclusiveMsPerFrame": 0.001554691811391607,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 0.19999998807907104
+        },
+        "Audio listener": {
+          "selfMsPerFrame": 0.01138256504296065,
+          "inclusiveMsPerFrame": 0.011438089764694053,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 0.30000001192092896
+        },
+        "Game / input driver": {
+          "selfMsPerFrame": 0.050138811877143176,
+          "inclusiveMsPerFrame": 0.37034980533256723,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 8.300000011920929
+        },
+        "Render submission": {
+          "selfMsPerFrame": 0.9690727370768901,
+          "inclusiveMsPerFrame": 0.9690727370768901,
+          "callsPerSecond": 60.02392958438896,
+          "maxCallMs": 3.600000023841858
+        },
+        "Audio construction": {
+          "selfMsPerFrame": 0.11354802854189537,
+          "inclusiveMsPerFrame": 0.11354802854189537,
+          "callsPerSecond": 30.495222415167074,
+          "maxCallMs": 1
+        },
+        "HUD": {
+          "selfMsPerFrame": 0.03475846806080854,
+          "inclusiveMsPerFrame": 0.03475846806080854,
+          "callsPerSecond": 11.96479218256282,
+          "maxCallMs": 0.5
+        },
+        "TacticalRouteGraph link": {
+          "selfMsPerFrame": 0.0012215435140864972,
+          "inclusiveMsPerFrame": 0.003775680018821602,
+          "callsPerSecond": 38.22734438272856,
+          "maxCallMs": 0.10000002384185791
+        },
+        "TacticalRouteGraph nearest": {
+          "selfMsPerFrame": 0.000610771872876817,
+          "inclusiveMsPerFrame": 0.003609105919812005,
+          "callsPerSecond": 6.132372594962559,
+          "maxCallMs": 0.40000003576278687
+        },
+        "LOS query": {
+          "selfMsPerFrame": 0.010438645303017692,
+          "inclusiveMsPerFrame": 0.01104941717589451,
+          "callsPerSecond": 69.55576959612425,
+          "maxCallMs": 0.2999999523162842
+        },
+        "AI perception / visibility": {
+          "selfMsPerFrame": 0.0007218211508670957,
+          "inclusiveMsPerFrame": 0.0115491394729233,
+          "callsPerSecond": 66.72288008214697,
+          "maxCallMs": 0.2999999523162842
+        },
+        "Mesh raycast": {
+          "selfMsPerFrame": 0.009605774543207265,
+          "inclusiveMsPerFrame": 0.009605774543207265,
+          "callsPerSecond": 0.5999060147245981,
+          "maxCallMs": 6
+        },
+        "AI perception filters": {
+          "selfMsPerFrame": 0.0014436424672107178,
+          "inclusiveMsPerFrame": 0.0014436424672107178,
+          "callsPerSecond": 64.25659979939029,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Local tactical path": {
+          "selfMsPerFrame": 0.0017767907314205223,
+          "inclusiveMsPerFrame": 0.0037201554294694203,
+          "callsPerSecond": 1.8663742680320832,
+          "maxCallMs": 0.40000003576278687
+        },
+        "Cover selection": {
+          "selfMsPerFrame": 0.000666296528419609,
+          "inclusiveMsPerFrame": 0.0040533036605839195,
+          "callsPerSecond": 2.932873849764702,
+          "maxCallMs": 0.5
+        },
+        "AI combat decision": {
+          "selfMsPerFrame": 0.005274847108479807,
+          "inclusiveMsPerFrame": 0.030927262128822543,
+          "callsPerSecond": 166.27395041450112,
+          "maxCallMs": 0.800000011920929
+        }
+      },
+      "bursts": {
+        "perception": 5,
+        "decision": 4,
+        "losActors": 4,
+        "routeStarts": 2
+      },
+      "totalSeconds": 45.04509999996455,
+      "rounds": [],
+      "shots": 5,
+      "deploys": 0,
+      "stats": {
+        "wallSeconds": 48,
+        "matchSeconds": 45,
+        "meshes": 290,
+        "materials": 32,
+        "textures": 7,
+        "particles": 0,
+        "ai": 15,
+        "deadAI": 2,
+        "activeEffects": 0,
+        "effectPool": 28,
+        "shellPool": 24,
+        "activeShells": 5,
+        "lights": 4,
+        "smokePool": 8,
+        "pressureShooters": 0,
+        "microDecisions": 217,
+        "muzzleBlocked": 3,
+        "projectiles": 0,
+        "decals": 0,
+        "audioVoices": 2,
+        "transformNodes": 139,
+        "pathNodes": 1616,
+        "heapMB": 66.2,
+        "fps": 60,
+        "restarts": 2,
+        "errors": 0
+      },
+      "audio": {
+        "active": 23,
+        "peak": 75,
+        "created": 10208,
+        "types": {
+          "createDynamicsCompressor": 1,
+          "createGain": 12,
+          "createBiquadFilter": 4,
+          "createConvolver": 1,
+          "createBufferSource": 3,
+          "createPanner": 2,
+          "createOscillator": 0
+        }
+      },
+      "heap": 69365146,
+      "routeCache": 73,
+      "routeScratch": 1,
+      "queue": 0,
+      "quality": null,
+      "render": [
+        1920,
+        1080
+      ],
+      "scheduler": null,
+      "mainThreadMsPerFrame": 2.08853248195447
+    },
+    {
+      "seconds": 30.00880000001192,
+      "frames": 1800,
+      "fps": 59.9824051611289,
+      "cpu": {
+        "mean": 1.664388888279597,
+        "p95": 2.899999976158142,
+        "p99": 3.599999964237213,
+        "max": 5.199999988079071
+      },
+      "frame": {
+        "mean": 16.675555555555555,
+        "p95": 16.80000001192093,
+        "p99": 17.399999976158142,
+        "max": 46.09999996423721
+      },
+      "metrics": {
+        "Collision / terrain": {
+          "selfMsPerFrame": 0.06833333250549105,
+          "inclusiveMsPerFrame": 0.10433333218097687,
+          "callsPerSecond": 6141.365199539028,
+          "maxCallMs": 0.3999999761581421
+        },
+        "Shell casings": {
+          "selfMsPerFrame": 0.0021666666534211902,
+          "inclusiveMsPerFrame": 0.003999999927149878,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 0.5
+        },
+        "Particles / smoke": {
+          "selfMsPerFrame": 0.0017222221692403158,
+          "inclusiveMsPerFrame": 0.0017222221692403158,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Strategic director": {
+          "selfMsPerFrame": 0.0015000001589457195,
+          "inclusiveMsPerFrame": 0.0015000001589457195,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 0.10000002384185791
+        },
+        "AI combat decision": {
+          "selfMsPerFrame": 0.001055555476082696,
+          "inclusiveMsPerFrame": 0.005444444451067182,
+          "callsPerSecond": 68.61320679264689,
+          "maxCallMs": 0.5999999642372131
+        },
+        "AI model update": {
+          "selfMsPerFrame": 0.017611110640896693,
+          "inclusiveMsPerFrame": 0.02216666599114736,
+          "callsPerSecond": 878.0757644420814,
+          "maxCallMs": 0.19999998807907104
+        },
+        "AI other": {
+          "selfMsPerFrame": 0.06250000049670537,
+          "inclusiveMsPerFrame": 0.22516666620969772,
+          "callsPerSecond": 899.7360774169335,
+          "maxCallMs": 2.300000011920929
+        },
+        "AI perception filters": {
+          "selfMsPerFrame": 0.0011111112104521858,
+          "inclusiveMsPerFrame": 0.0011111112104521858,
+          "callsPerSecond": 98.23785023056,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Route planning": {
+          "selfMsPerFrame": 0.021222222414281632,
+          "inclusiveMsPerFrame": 0.030555555721124013,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 0.9000000357627869
+        },
+        "Score presence": {
+          "selfMsPerFrame": 0.0057222223281860355,
+          "inclusiveMsPerFrame": 0.0057222223281860355,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Particles / world FX": {
+          "selfMsPerFrame": 0.0012222221824857923,
+          "inclusiveMsPerFrame": 0.0012222221824857923,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Audio listener": {
+          "selfMsPerFrame": 0.013444444570276472,
+          "inclusiveMsPerFrame": 0.013611111243565878,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 0.30000001192092896
+        },
+        "Game / input driver": {
+          "selfMsPerFrame": 0.048055555952919854,
+          "inclusiveMsPerFrame": 0.3530000001192093,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 2.699999988079071
+        },
+        "Render submission": {
+          "selfMsPerFrame": 1.262611110177305,
+          "inclusiveMsPerFrame": 1.262611110177305,
+          "callsPerSecond": 59.9824051611289,
+          "maxCallMs": 3.600000023841858
+        },
+        "LOS query": {
+          "selfMsPerFrame": 0.008055555721124014,
+          "inclusiveMsPerFrame": 0.009000000059604645,
+          "callsPerSecond": 81.87598304494095,
+          "maxCallMs": 0.19999998807907104
+        },
+        "AI perception / visibility": {
+          "selfMsPerFrame": 0.0016666666666666668,
+          "inclusiveMsPerFrame": 0.009166666633552974,
+          "callsPerSecond": 67.71347071522996,
+          "maxCallMs": 0.19999998807907104
+        },
+        "Audio construction": {
+          "selfMsPerFrame": 0.08999999983443155,
+          "inclusiveMsPerFrame": 0.08999999983443155,
+          "callsPerSecond": 22.226813468040543,
+          "maxCallMs": 0.699999988079071
+        },
+        "HUD": {
+          "selfMsPerFrame": 0.03644444468948576,
+          "inclusiveMsPerFrame": 0.03644444468948576,
+          "callsPerSecond": 11.99648103222578,
+          "maxCallMs": 0.5999999642372131
+        },
+        "TacticalRouteGraph link": {
+          "selfMsPerFrame": 0.0028333334459198847,
+          "inclusiveMsPerFrame": 0.008222222261958652,
+          "callsPerSecond": 71.77894484281758,
+          "maxCallMs": 0.20000004768371582
+        },
+        "TacticalRouteGraph nearest": {
+          "selfMsPerFrame": 0.0008888888359069824,
+          "inclusiveMsPerFrame": 0.008611111111111111,
+          "callsPerSecond": 12.129775265917178,
+          "maxCallMs": 0.5999999642372131
+        },
+        "Cover selection": {
+          "selfMsPerFrame": 0.00016666664017571343,
+          "inclusiveMsPerFrame": 0.000722222195731269,
+          "callsPerSecond": 2.3659726480223067,
+          "maxCallMs": 0.2999999523162842
+        },
+        "Local tactical path": {
+          "selfMsPerFrame": 0.00016666667328940496,
+          "inclusiveMsPerFrame": 0.0007777777976459927,
+          "callsPerSecond": 0.6331476100341384,
+          "maxCallMs": 0.2999999523162842
+        },
+        "Mesh raycast": {
+          "selfMsPerFrame": 0.003555555542310079,
+          "inclusiveMsPerFrame": 0.003555555542310079,
+          "callsPerSecond": 0.43320625949704206,
+          "maxCallMs": 1.199999988079071
+        }
+      },
+      "bursts": {
+        "perception": 5,
+        "decision": 3,
+        "losActors": 4,
+        "routeStarts": 2
+      },
+      "totalSeconds": 75.06109999996379,
+      "rounds": [],
+      "shots": 6,
+      "deploys": 1,
+      "stats": {
+        "wallSeconds": 78,
+        "matchSeconds": 75,
+        "meshes": 290,
+        "materials": 32,
+        "textures": 7,
+        "particles": 0,
+        "ai": 15,
+        "deadAI": 1,
+        "activeEffects": 0,
+        "effectPool": 28,
+        "shellPool": 24,
+        "activeShells": 10,
+        "lights": 4,
+        "smokePool": 8,
+        "pressureShooters": 1,
+        "microDecisions": 303,
+        "muzzleBlocked": 3,
+        "projectiles": 0,
+        "decals": 0,
+        "audioVoices": 2,
+        "transformNodes": 139,
+        "pathNodes": 1323,
+        "heapMB": 71.7,
+        "fps": 60,
+        "restarts": 2,
+        "errors": 0
+      },
+      "audio": {
+        "active": 23,
+        "peak": 99,
+        "created": 15221,
+        "types": {
+          "createDynamicsCompressor": 1,
+          "createGain": 12,
+          "createBiquadFilter": 4,
+          "createConvolver": 1,
+          "createBufferSource": 3,
+          "createPanner": 2,
+          "createOscillator": 0
+        }
+      },
+      "heap": 75222610,
+      "routeCache": 134,
+      "routeScratch": 1,
+      "queue": 0,
+      "quality": null,
+      "render": [
+        1920,
+        1080
+      ],
+      "scheduler": null,
+      "mainThreadMsPerFrame": 2.3354377777777775
+    },
+    {
+      "seconds": 30.01959999996424,
+      "frames": 1801,
+      "fps": 59.99413716379117,
+      "cpu": {
+        "mean": 1.7129927813047041,
+        "p95": 2.899999976158142,
+        "p99": 3.5,
+        "max": 4.5
+      },
+      "frame": {
+        "mean": 16.6663520266651,
+        "p95": 16.80000001192093,
+        "p99": 16.899999976158142,
+        "max": 19.100000023841858
+      },
+      "metrics": {
+        "Collision / terrain": {
+          "selfMsPerFrame": 0.06191005010461886,
+          "inclusiveMsPerFrame": 0.09328151080159595,
+          "callsPerSecond": 6157.443803389126,
+          "maxCallMs": 0.19999998807907104
+        },
+        "Shell casings": {
+          "selfMsPerFrame": 0.0017212658442105934,
+          "inclusiveMsPerFrame": 0.005552470816432735,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 0.6000000238418579
+        },
+        "Particles / smoke": {
+          "selfMsPerFrame": 0.0016102165662203148,
+          "inclusiveMsPerFrame": 0.0016102165662203148,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Strategic director": {
+          "selfMsPerFrame": 0.001721265910401204,
+          "inclusiveMsPerFrame": 0.001721265910401204,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 0.19999998807907104
+        },
+        "Audio construction": {
+          "selfMsPerFrame": 0.1054414204926308,
+          "inclusiveMsPerFrame": 0.1054414204926308,
+          "callsPerSecond": 25.583285586780466,
+          "maxCallMs": 0.6000000238418579
+        },
+        "AI model update": {
+          "selfMsPerFrame": 0.017934480817499324,
+          "inclusiveMsPerFrame": 0.02215435874256937,
+          "callsPerSecond": 834.8545616873595,
+          "maxCallMs": 0.19999998807907104
+        },
+        "AI other": {
+          "selfMsPerFrame": 0.060577457014684345,
+          "inclusiveMsPerFrame": 0.2432537469382024,
+          "callsPerSecond": 899.9120574568676,
+          "maxCallMs": 1.7999999523162842
+        },
+        "AI combat decision": {
+          "selfMsPerFrame": 0.004441976514145906,
+          "inclusiveMsPerFrame": 0.03425874506877834,
+          "callsPerSecond": 218.05753574357414,
+          "maxCallMs": 0.6000000238418579
+        },
+        "AI perception filters": {
+          "selfMsPerFrame": 0.001332592924457997,
+          "inclusiveMsPerFrame": 0.001332592924457997,
+          "callsPerSecond": 113.55914136111278,
+          "maxCallMs": 0.10000002384185791
+        },
+        "LOS query": {
+          "selfMsPerFrame": 0.015158245359639999,
+          "inclusiveMsPerFrame": 0.016157689920602278,
+          "callsPerSecond": 118.95561566457428,
+          "maxCallMs": 0.2999999523162842
+        },
+        "AI perception / visibility": {
+          "selfMsPerFrame": 0.001776790698325217,
+          "inclusiveMsPerFrame": 0.014714047685058695,
+          "callsPerSecond": 89.04182600711482,
+          "maxCallMs": 0.2999999523162842
+        },
+        "Route planning": {
+          "selfMsPerFrame": 0.01538034424657361,
+          "inclusiveMsPerFrame": 0.02004441968074843,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 0.800000011920929
+        },
+        "Score presence": {
+          "selfMsPerFrame": 0.005441421472251845,
+          "inclusiveMsPerFrame": 0.005441421472251845,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 0.19999998807907104
+        },
+        "Particles / world FX": {
+          "selfMsPerFrame": 0.0012770682027245944,
+          "inclusiveMsPerFrame": 0.0012770682027245944,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Audio listener": {
+          "selfMsPerFrame": 0.011215990844665137,
+          "inclusiveMsPerFrame": 0.011382564943674735,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 0.2999999523162842
+        },
+        "Game / input driver": {
+          "selfMsPerFrame": 0.0463076079308755,
+          "inclusiveMsPerFrame": 0.36396446359084755,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 2
+        },
+        "Render submission": {
+          "selfMsPerFrame": 1.3027762348356675,
+          "inclusiveMsPerFrame": 1.3027762348356675,
+          "callsPerSecond": 59.99413716379117,
+          "maxCallMs": 3.399999976158142
+        },
+        "HUD": {
+          "selfMsPerFrame": 0.036313159806009535,
+          "inclusiveMsPerFrame": 0.036313159806009535,
+          "callsPerSecond": 11.992165118803344,
+          "maxCallMs": 0.5
+        },
+        "Cover selection": {
+          "selfMsPerFrame": 0.0007218212832483168,
+          "inclusiveMsPerFrame": 0.0032759578210787266,
+          "callsPerSecond": 4.6969313381979765,
+          "maxCallMs": 0.5
+        },
+        "TacticalRouteGraph link": {
+          "selfMsPerFrame": 0.0023875623395348974,
+          "inclusiveMsPerFrame": 0.006107717835194928,
+          "callsPerSecond": 85.71066902966945,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Local tactical path": {
+          "selfMsPerFrame": 0.0009439200378007057,
+          "inclusiveMsPerFrame": 0.003664630707736018,
+          "callsPerSecond": 2.365121453986215,
+          "maxCallMs": 0.40000003576278687
+        },
+        "TacticalRouteGraph nearest": {
+          "selfMsPerFrame": 0.000888395282971998,
+          "inclusiveMsPerFrame": 0.0062187672786617335,
+          "callsPerSecond": 9.593732095042675,
+          "maxCallMs": 0.30000001192092896
+        },
+        "Mesh raycast": {
+          "selfMsPerFrame": 0.0057745697033663446,
+          "inclusiveMsPerFrame": 0.0057745697033663446,
+          "callsPerSecond": 0.7328545350379821,
+          "maxCallMs": 1
+        }
+      },
+      "bursts": {
+        "perception": 5,
+        "decision": 3,
+        "losActors": 4,
+        "routeStarts": 2
+      },
+      "totalSeconds": 105.0771999999871,
+      "rounds": [],
+      "shots": 9,
+      "deploys": 2,
+      "stats": {
+        "wallSeconds": 108,
+        "matchSeconds": 105,
+        "meshes": 290,
+        "materials": 32,
+        "textures": 7,
+        "particles": 0,
+        "ai": 15,
+        "deadAI": 1,
+        "activeEffects": 0,
+        "effectPool": 28,
+        "shellPool": 24,
+        "activeShells": 2,
+        "lights": 4,
+        "smokePool": 8,
+        "pressureShooters": 0,
+        "microDecisions": 586,
+        "muzzleBlocked": 18,
+        "projectiles": 0,
+        "decals": 0,
+        "audioVoices": 1,
+        "transformNodes": 139,
+        "pathNodes": 1554,
+        "heapMB": 74.3,
+        "fps": 60,
+        "restarts": 2,
+        "errors": 0
+      },
+      "audio": {
+        "active": 15,
+        "peak": 99,
+        "created": 21250,
+        "types": {
+          "createDynamicsCompressor": 1,
+          "createGain": 8,
+          "createBiquadFilter": 3,
+          "createConvolver": 1,
+          "createBufferSource": 1,
+          "createPanner": 0,
+          "createOscillator": 1
+        }
+      },
+      "heap": 77904136,
+      "routeCache": 174,
+      "routeScratch": 1,
+      "queue": 0,
+      "quality": null,
+      "render": [
+        1920,
+        1080
+      ],
+      "scheduler": null,
+      "mainThreadMsPerFrame": 2.5454630760688506
+    },
+    {
+      "seconds": 30.012900000035764,
+      "frames": 1801,
+      "fps": 60.00753009532081,
+      "cpu": {
+        "mean": 1.8047751252152138,
+        "p95": 3.100000023841858,
+        "p99": 3.699999988079071,
+        "max": 4.399999976158142
+      },
+      "frame": {
+        "mean": 16.666296501943364,
+        "p95": 16.900000035762787,
+        "p99": 17.100000023841858,
+        "max": 20.5
+      },
+      "metrics": {
+        "Collision / terrain": {
+          "selfMsPerFrame": 0.07184897175370025,
+          "inclusiveMsPerFrame": 0.10510827126865716,
+          "callsPerSecond": 7029.210772692696,
+          "maxCallMs": 0.5
+        },
+        "Shell casings": {
+          "selfMsPerFrame": 0.001998889585258827,
+          "inclusiveMsPerFrame": 0.004997223764575236,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 0.5999999642372131
+        },
+        "Particles / smoke": {
+          "selfMsPerFrame": 0.0008883953822579137,
+          "inclusiveMsPerFrame": 0.0008883953822579137,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Strategic director": {
+          "selfMsPerFrame": 0.002332037816373326,
+          "inclusiveMsPerFrame": 0.002332037816373326,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 0.10000002384185791
+        },
+        "AI combat decision": {
+          "selfMsPerFrame": 0.005274847307051638,
+          "inclusiveMsPerFrame": 0.04813992192783599,
+          "callsPerSecond": 220.00539767873587,
+          "maxCallMs": 0.699999988079071
+        },
+        "AI model update": {
+          "selfMsPerFrame": 0.018434203246909336,
+          "inclusiveMsPerFrame": 0.022265408086750257,
+          "callsPerSecond": 847.7021547391183,
+          "maxCallMs": 0.19999998807907104
+        },
+        "AI other": {
+          "selfMsPerFrame": 0.0684064402638509,
+          "inclusiveMsPerFrame": 0.28200999268023985,
+          "callsPerSecond": 900.1129514298121,
+          "maxCallMs": 2.300000011920929
+        },
+        "AI perception filters": {
+          "selfMsPerFrame": 0.001277068268915205,
+          "inclusiveMsPerFrame": 0.001277068268915205,
+          "callsPerSecond": 117.78268677787844,
+          "maxCallMs": 0.10000002384185791
+        },
+        "LOS query": {
+          "selfMsPerFrame": 0.011882287472370662,
+          "inclusiveMsPerFrame": 0.013048306330914368,
+          "callsPerSecond": 119.34868006742873,
+          "maxCallMs": 0.20000004768371582
+        },
+        "AI perception / visibility": {
+          "selfMsPerFrame": 0.0020544142738969243,
+          "inclusiveMsPerFrame": 0.013714602793143366,
+          "callsPerSecond": 101.72292580844777,
+          "maxCallMs": 0.40000003576278687
+        },
+        "Route planning": {
+          "selfMsPerFrame": 0.015769017298707427,
+          "inclusiveMsPerFrame": 0.01882287639832907,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 0.8999999761581421
+        },
+        "Score presence": {
+          "selfMsPerFrame": 0.004719600553051886,
+          "inclusiveMsPerFrame": 0.004719600553051886,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 0.20000004768371582
+        },
+        "Particles / world FX": {
+          "selfMsPerFrame": 0.001110494169905608,
+          "inclusiveMsPerFrame": 0.001110494169905608,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 0.10000002384185791
+        },
+        "Audio listener": {
+          "selfMsPerFrame": 0.012437534788990604,
+          "inclusiveMsPerFrame": 0.012826207741838505,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 0.3999999761581421
+        },
+        "Game / input driver": {
+          "selfMsPerFrame": 0.04414214381636811,
+          "inclusiveMsPerFrame": 0.3978345362032075,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 2.800000011920929
+        },
+        "HUD": {
+          "selfMsPerFrame": 0.037756802041553114,
+          "inclusiveMsPerFrame": 0.037756802041553114,
+          "callsPerSecond": 12.028161223992678,
+          "maxCallMs": 0.5
+        },
+        "Render submission": {
+          "selfMsPerFrame": 1.3581343692650336,
+          "inclusiveMsPerFrame": 1.3581343692650336,
+          "callsPerSecond": 60.00753009532081,
+          "maxCallMs": 3.600000023841858
+        },
+        "Audio construction": {
+          "selfMsPerFrame": 0.11776790693029968,
+          "inclusiveMsPerFrame": 0.11776790693029968,
+          "callsPerSecond": 25.78891076833887,
+          "maxCallMs": 0.7000000476837158
+        },
+        "Mesh raycast": {
+          "selfMsPerFrame": 0.006440866165595343,
+          "inclusiveMsPerFrame": 0.006440866165595343,
+          "callsPerSecond": 0.5331040985703126,
+          "maxCallMs": 1.199999988079071
+        },
+        "Cover selection": {
+          "selfMsPerFrame": 0.0010549694812675107,
+          "inclusiveMsPerFrame": 0.003164908311421311,
+          "callsPerSecond": 5.930783096594728,
+          "maxCallMs": 0.30000001192092896
+        },
+        "TacticalRouteGraph link": {
+          "selfMsPerFrame": 0.005552470783337429,
+          "inclusiveMsPerFrame": 0.012493059113580342,
+          "callsPerSecond": 465.6331110950074,
+          "maxCallMs": 0.19999998807907104
+        },
+        "TacticalRouteGraph nearest": {
+          "selfMsPerFrame": 0.003220433331012461,
+          "inclusiveMsPerFrame": 0.014825097227811416,
+          "callsPerSecond": 13.927344575149416,
+          "maxCallMs": 0.5
+        },
+        "Local tactical path": {
+          "selfMsPerFrame": 0.0012215435140864972,
+          "inclusiveMsPerFrame": 0.014658522864039377,
+          "callsPerSecond": 4.997850924096681,
+          "maxCallMs": 0.5
+        }
+      },
+      "bursts": {
+        "perception": 6,
+        "decision": 3,
+        "losActors": 5,
+        "routeStarts": 2
+      },
+      "totalSeconds": 135.09319999998553,
+      "rounds": [],
+      "shots": 12,
+      "deploys": 3,
+      "stats": {
+        "wallSeconds": 138,
+        "matchSeconds": 135,
+        "meshes": 290,
+        "materials": 32,
+        "textures": 7,
+        "particles": 0,
+        "ai": 15,
+        "deadAI": 2,
+        "activeEffects": 0,
+        "effectPool": 28,
+        "shellPool": 24,
+        "activeShells": 5,
+        "lights": 4,
+        "smokePool": 8,
+        "pressureShooters": 0,
+        "microDecisions": 899,
+        "muzzleBlocked": 116,
+        "projectiles": 0,
+        "decals": 0,
+        "audioVoices": 1,
+        "transformNodes": 139,
+        "pathNodes": 1661,
+        "heapMB": 71.2,
+        "fps": 60,
+        "restarts": 2,
+        "errors": 0
+      },
+      "audio": {
+        "active": 16,
+        "peak": 99,
+        "created": 27242,
+        "types": {
+          "createDynamicsCompressor": 1,
+          "createGain": 8,
+          "createBiquadFilter": 3,
+          "createConvolver": 1,
+          "createBufferSource": 2,
+          "createPanner": 1,
+          "createOscillator": 0
+        }
+      },
+      "heap": 74655513,
+      "routeCache": 212,
+      "routeScratch": 1,
+      "queue": 0,
+      "quality": null,
+      "render": [
+        1920,
+        1080
+      ],
+      "scheduler": null,
+      "mainThreadMsPerFrame": 3.061444197667962
+    }
+  ],
+  "gc": [
+    {
+      "elapsed": 120,
+      "stats": {
+        "wallSeconds": 138,
+        "matchSeconds": 135,
+        "meshes": 290,
+        "materials": 32,
+        "textures": 7,
+        "particles": 0,
+        "ai": 15,
+        "deadAI": 2,
+        "activeEffects": 0,
+        "effectPool": 28,
+        "shellPool": 24,
+        "activeShells": 5,
+        "lights": 4,
+        "smokePool": 8,
+        "pressureShooters": 0,
+        "microDecisions": 899,
+        "muzzleBlocked": 116,
+        "projectiles": 0,
+        "decals": 0,
+        "audioVoices": 1,
+        "transformNodes": 139,
+        "pathNodes": 1661,
+        "heapMB": 67.9,
+        "fps": 57.1,
+        "restarts": 2,
+        "errors": 0
+      },
+      "audio": {
+        "active": 16,
+        "peak": 99,
+        "created": 27249,
+        "types": {
+          "createDynamicsCompressor": 1,
+          "createGain": 8,
+          "createBiquadFilter": 3,
+          "createConvolver": 1,
+          "createBufferSource": 2,
+          "createPanner": 1,
+          "createOscillator": 0
+        }
+      },
+      "heap": 71218541,
+      "routeCache": 212,
+      "routeScratch": 1,
+      "queue": 0,
+      "quality": null,
+      "render": [
+        1920,
+        1080
+      ],
+      "scheduler": null
+    }
+  ],
+  "errors": []
+}

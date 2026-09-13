@@ -1,0 +1,667 @@
+{
+  "source": "D:\\下载\\材质贴图",
+  "normalConvention": "OpenGL",
+  "armChannels": "R=AO, G=roughness, B=metallic",
+  "assets": [
+    {
+      "id": "brown_leather",
+      "maps": {
+        "albedo": {
+          "source": "brown_leather_1k\\textures\\brown_leather_albedo_1k.jpg",
+          "sha256": "7e9e1d6566d1fd91d4ceb4966c4820361e85d53a7a828b6bab3b2a093a876cd1",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 232138
+        },
+        "normal": {
+          "source": "brown_leather_1k\\textures\\brown_leather_nor_gl_1k.png",
+          "sha256": "6354daff40330a2fcd6c1061912876ddc79889c960975adba336b013db5edcd5",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 460144
+        },
+        "arm": {
+          "source": "brown_leather_1k\\textures\\brown_leather_arm_1k.png",
+          "sha256": "0234c75f09a2e6af6eecd8674e79b413f41d4a665f1ecbfc84eb3e3ffe6419c3",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 426066
+        }
+      }
+    },
+    {
+      "id": "brown_mud_03",
+      "maps": {
+        "albedo": {
+          "source": "brown_mud_03_1k\\textures\\brown_mud_03_diff_1k.jpg",
+          "sha256": "6da4fbd6fc5d21044dcbdbd96e098fb464ed544b42c982e72ce8ccd1d53686c5",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 257652
+        },
+        "normal": {
+          "source": "brown_mud_03_1k\\textures\\brown_mud_03_nor_gl_1k.png",
+          "sha256": "87d3c0e883850dc0ab8c6eba5d6e84dc9fb8aae5c146e1382799975373171441",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 601056
+        },
+        "arm": {
+          "source": "brown_mud_03_1k\\textures\\brown_mud_03_arm_1k.png",
+          "sha256": "883cea8e2e92c5eda0d4dc3fffd994286997b9767b5dd0593c739a7a9a30e395",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 347538
+        }
+      }
+    },
+    {
+      "id": "cotton_jersey",
+      "maps": {
+        "albedo": {
+          "source": "cotton_jersey_1k\\textures\\cotton_jersey_diff_1k.jpg",
+          "sha256": "0f1b790e4087223275aaa6fdffdd46a556a26d2af72cd811acf72ba9c21ec1f6",
+          "sourceSize": [
+            1024,
+            1025
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 105742
+        },
+        "normal": {
+          "source": "cotton_jersey_1k\\textures\\cotton_jersey_nor_gl_1k.png",
+          "sha256": "d2d3bf79f2dd4214d8efa4c82bec9ce5ef409daea33b7d3add10d4fed08bb5a4",
+          "sourceSize": [
+            1024,
+            1025
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 254312
+        },
+        "arm": {
+          "source": "cotton_jersey_1k\\textures\\cotton_jersey_arm_1k.png",
+          "sha256": "d17c4efc0004f4934d9fa6991706b0fcfee9d4ab4e2ff183b981cc8853fbb4b0",
+          "sourceSize": [
+            1024,
+            1025
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 288158
+        }
+      }
+    },
+    {
+      "id": "dark_wood",
+      "maps": {
+        "albedo": {
+          "source": "dark_wood_1k\\textures\\dark_wood_diff_1k.jpg",
+          "sha256": "d68da31655bf47024af893156a6a01a6c95bb60f55d97e2dc9bdd47be320e5b5",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 187184
+        },
+        "normal": {
+          "source": "dark_wood_1k\\textures\\dark_wood_nor_gl_1k.png",
+          "sha256": "5e8c1696af50e78c56fb5d719bf3a15c5be54f18055844ec60ff58d1b4181776",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 121728
+        },
+        "arm": {
+          "source": "dark_wood_1k\\textures\\dark_wood_arm_1k.png",
+          "sha256": "6961e08e8eca17f3dc44c5ed291f1f0d730efef496aaf397994ee0bd42a958a8",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 202890
+        }
+      }
+    },
+    {
+      "id": "dirt_floor",
+      "maps": {
+        "albedo": {
+          "source": "dirt_floor_1k\\textures\\dirt_floor_diff_1k.jpg",
+          "sha256": "6c2e7f1c5eab8239fec561f255c607d0e3a86046925ba3a8b9340805efc1ab62",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 300924
+        },
+        "normal": {
+          "source": "dirt_floor_1k\\textures\\dirt_floor_nor_gl_1k.png",
+          "sha256": "be9a1f51360e7bd44e65b34840408a1dfc48f8d1f3d5d9de79b658dfe83d21cc",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 436646
+        },
+        "arm": {
+          "source": "dirt_floor_1k\\textures\\dirt_floor_arm_1k.png",
+          "sha256": "c89a221387850e5aa2db1ca8221464b80824adca0f7ae2abd8f9061c7f59c8b1",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 226762
+        }
+      }
+    },
+    {
+      "id": "excavated_soil_wall",
+      "maps": {
+        "albedo": {
+          "source": "excavated_soil_wall_1k\\textures\\excavated_soil_wall_diff_1k.jpg",
+          "sha256": "5840562eda67d0be4bdc48bba953abce9ffbe394a358e0911f4875bf9f0ed72a",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 120222
+        },
+        "normal": {
+          "source": "excavated_soil_wall_1k\\textures\\excavated_soil_wall_nor_gl_1k.png",
+          "sha256": "98fae40575173b3f57f1baea404da6f08d3550bf1d1fd35523d56b26d56844be",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 596448
+        },
+        "arm": {
+          "source": "excavated_soil_wall_1k\\textures\\excavated_soil_wall_arm_1k.png",
+          "sha256": "69c48cf38a40a86675b8b799cc5f851cd8644ea53461095381ea4da012c65cfa",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 256496
+        }
+      }
+    },
+    {
+      "id": "farm_soil",
+      "maps": {
+        "albedo": {
+          "source": "farm_soil_diff_1k\\farm_soil_diff_1k.jpg",
+          "sha256": "bfa2850109d1018ecb25342d9f17a5a81e826f7c67edfcaa7c878b60e62cc010",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 175412
+        },
+        "normal": {
+          "source": "farm_soil_diff_1k\\farm_soil_nor_gl_1k.png",
+          "sha256": "8cf1b9569b403a531a635759b91457fd9cf2c2cf2576ca8edb61d5dfab50e4d9",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 666586
+        },
+        "arm": {
+          "source": "farm_soil_diff_1k\\farm_soil_arm_1k.jpg",
+          "sha256": "77612d6d3ebd9229843d1e277c87a5f63583d5cbfa9e92a79f39730b8ac468a5",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 415394
+        }
+      }
+    },
+    {
+      "id": "gravelly_sand",
+      "maps": {
+        "albedo": {
+          "source": "gravelly_sand_1k\\gravelly_sand_diff_1k.jpg",
+          "sha256": "bc1624594ce807f04eaa023f6f9df93ffefd20904570cd46ca302b954ef80eec",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 390532
+        },
+        "normal": {
+          "source": "gravelly_sand_1k\\gravelly_sand_nor_gl_1k.png",
+          "sha256": "a2c4abfb02e82659d2ed1a325e6336e62116088e57e86e8a258fe9f0cc5526ab",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 584298
+        },
+        "arm": {
+          "source": "gravelly_sand_1k\\gravelly_sand_arm_1k.jpg",
+          "sha256": "24ae423af3a5ca6ba78fc02fc5257d0270888fb1e60996c761ee110994c6ed6b",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 346072
+        }
+      }
+    },
+    {
+      "id": "grey_plaster",
+      "maps": {
+        "albedo": {
+          "source": "grey_plaster_1k\\textures\\grey_plaster_diff_1k.jpg",
+          "sha256": "dcf34c5f3801cc43189f0edae3c430b602c827956e9d6ce4b89a85e53e952da9",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 426572
+        },
+        "normal": {
+          "source": "grey_plaster_1k\\textures\\grey_plaster_nor_gl_1k.png",
+          "sha256": "7ffd1ed71c202566e3af93c7c4f4a2f0031ddffb9fd22fb8a282e82fe84aeea2",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 247230
+        },
+        "arm": {
+          "source": "grey_plaster_1k\\textures\\grey_plaster_arm_1k.png",
+          "sha256": "721265256634f04970eb5e66450ce6c3ab3e18ae04e439e8456ccf6bc49be7a6",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 331608
+        }
+      }
+    },
+    {
+      "id": "grey_stone_path",
+      "maps": {
+        "albedo": {
+          "source": "grey_stone_path_1k\\textures\\grey_stone_path_diff_1k.jpg",
+          "sha256": "9b98572f768a5ca2a050f060807c737e640da303eb1700383bf4d549def2835c",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 287622
+        },
+        "normal": {
+          "source": "grey_stone_path_1k\\textures\\grey_stone_path_nor_gl_1k.png",
+          "sha256": "865d7cff7e5509cc6519b08c85b88cab594c93f760e96dd1ca9af8c71bd94134",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 420792
+        },
+        "arm": {
+          "source": "grey_stone_path_1k\\textures\\grey_stone_path_arm_1k.png",
+          "sha256": "fd360fbc41e3e414cbd76920bb5ba694c06798467963d4ee19906703aa4e7d9d",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 279544
+        }
+      }
+    },
+    {
+      "id": "hessian_380",
+      "maps": {
+        "albedo": {
+          "source": "hessian_380_1k\\textures\\hessian_380_diff_1k.jpg",
+          "sha256": "5727302df3a9c845e6320ff186ac13fc7d0f1ffcd6fda71667e808e09379fe6f",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 322964
+        },
+        "normal": {
+          "source": "hessian_380_1k\\textures\\hessian_380_nor_gl_1k.png",
+          "sha256": "c7d36fe0e0beeebcbbb6b8a55e62b73cef56c890e683bb295fcf9e3495aaf3a3",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 506586
+        },
+        "arm": {
+          "source": "hessian_380_1k\\textures\\hessian_380_arm_1k.png",
+          "sha256": "be71c22d56ec9ee4e1b1166113ce44afaecf0bf21b50739eff9d6a9433683994",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 506308
+        }
+      }
+    },
+    {
+      "id": "rusty_metal_04",
+      "maps": {
+        "albedo": {
+          "source": "rusty_metal_04_1k\\textures\\rusty_metal_04_diff_1k.jpg",
+          "sha256": "37c6757c5b6b2229f61423c7e5013f970e4dafb48070d35f53ed6d08958ed288",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 292382
+        },
+        "normal": {
+          "source": "rusty_metal_04_1k\\textures\\rusty_metal_04_nor_gl_1k.png",
+          "sha256": "ec067c762ebc016abb90bbb4c8f21130e748c10a13b62e6a2ab61bd65e852b3e",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 403182
+        },
+        "arm": {
+          "source": "rusty_metal_04_1k\\textures\\rusty_metal_04_arm_1k.png",
+          "sha256": "530fa46b4a32caf9d477aa8195b9267faef308a16105edab209f60a3a7b052c4",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 379486
+        }
+      }
+    },
+    {
+      "id": "sandstone_blocks_04",
+      "maps": {
+        "albedo": {
+          "source": "Sandstone Blocks 04\\sandstone_blocks_04_diff_1k.jpg",
+          "sha256": "a1399a26a60b5024a832c8dd0f1a27bc7ad6c4d06fd60143d803ff6d93b778ed",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 227284
+        },
+        "normal": {
+          "source": "Sandstone Blocks 04\\sandstone_blocks_04_nor_gl_1k.png",
+          "sha256": "89c0e63c39c22e0e72ec9bd2c508216599cdd6c3b9087ab9854c0c16e713f987",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 367138
+        },
+        "arm": {
+          "source": "Sandstone Blocks 04\\sandstone_blocks_04_arm_1k.jpg",
+          "sha256": "d72349e233c868b321c76aa8375f6c614088a7350d6fcb6e7e745954dfdada5b",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 366946
+        }
+      }
+    },
+    {
+      "id": "thatch_roof_angled",
+      "maps": {
+        "albedo": {
+          "source": "thatch_roof_angled_1k\\textures\\thatch_roof_angled_diff_1k.jpg",
+          "sha256": "ad84b9bf0a826c6e573f4bac09a0b96f33aec673a7e31cdd360667dc355f3599",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 265498
+        },
+        "normal": {
+          "source": "thatch_roof_angled_1k\\textures\\thatch_roof_angled_nor_gl_1k.png",
+          "sha256": "cfe7b6084739d26965b692c25d9d1649e64497b2b27209edbd2ec68d20bb13ce",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 645444
+        },
+        "arm": {
+          "source": "thatch_roof_angled_1k\\textures\\thatch_roof_angled_arm_1k.png",
+          "sha256": "f2ea8ae467a8baf7cee3fbbd0433b8d047108261e226725dbeaf212d2e557ddf",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 412148
+        }
+      }
+    },
+    {
+      "id": "weathered_brown_planks",
+      "maps": {
+        "albedo": {
+          "source": "weathered_brown_planks_1k\\textures\\weathered_brown_planks_diff_1k.jpg",
+          "sha256": "94833feda44e025a9139f7b5723ea84e4f0258d3b54939a79e1013c133085e29",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            1024,
+            1024
+          ],
+          "bytes": 203820
+        },
+        "normal": {
+          "source": "weathered_brown_planks_1k\\textures\\weathered_brown_planks_nor_gl_1k.png",
+          "sha256": "17e74f7e4742f6b7f385b1ca57637fd448247bb1dcfcee3dbd58f4de8d32b1b2",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 357894
+        },
+        "arm": {
+          "source": "weathered_brown_planks_1k\\textures\\weathered_brown_planks_arm_1k.png",
+          "sha256": "c11070d29e192569511e53e371e9782ce560ce3643fad615d1c2ca9d185d22c8",
+          "sourceSize": [
+            1024,
+            1024
+          ],
+          "size": [
+            512,
+            512
+          ],
+          "bytes": 258632
+        }
+      }
+    }
+  ]
+}
